@@ -6,6 +6,8 @@ const VisitRecord = require('../models/VisitRecord');
 const { buildQueueState } = require('../utils/queueHelpers');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
+const { runXGBoostPrediction } = require('./ml');
+
 // Helper: record a visit when a token is completed/skipped
 async function recordVisit(token, status = 'done') {
   try {
@@ -39,9 +41,9 @@ router.get('/queue', async (req, res) => {
 });
 
 // STAFF/ADMIN — add patient (optionally assign to doctor)
-router.post('/queue/add', requireAuth, requireRole('staff', 'admin'), async (req, res) => {
+router.post('/queue/add', requireAuth, requireRole('staff', 'admin', 'patient'), async (req, res) => {
   try {
-    const { patientName, doctorId, doctorName, department } = req.body;
+    const { patientName, doctorId, doctorName, department, vitals, consultationReason, diseasePrediction } = req.body;
     if (!patientName?.trim()) return res.status(400).json({ error: 'Patient name is required' });
 
     const settings = await ClinicSettings.findOneAndUpdate(
@@ -50,23 +52,39 @@ router.post('/queue/add', requireAuth, requireRole('staff', 'admin'), async (req
       { new: true, upsert: true }
     );
 
+    // Predict ML Priority Alert
+    const mlPrediction = await runXGBoostPrediction(vitals || {});
+
     const newToken = await Token.create({
       tokenNumber: settings.lastIssuedToken,
       patientName: patientName.trim(),
       status: 'waiting',
       doctorId:    doctorId    || null,
       doctorName:  doctorName  || '',
-      department:  department  || ''
+      department:  department  || '',
+      consultationReason: consultationReason?.trim() || 'General Consultation',
+      priorityLevel: mlPrediction.priorityLevel,
+      priorityScore: mlPrediction.priorityScore,
+      isEmergencyAlert: mlPrediction.isEmergencyAlert,
+      predictedDisease: diseasePrediction?.disease || '',
+      diseaseConfidence: diseasePrediction?.confidence || 0,
+      vitals: vitals || {
+        age: 35, systolic_bp: 120, diastolic_bp: 80, heart_rate: 75,
+        spo2: 98, temperature: 37.0, pain_score: 0, symptom_severity: 1
+      }
     });
 
-    const state = await buildQueueState();
+    const state = await buildQueueState(doctorId || null);
     req.io.emit('queueUpdated', state);
+
+    const alertTone = mlPrediction.isEmergencyAlert ? 'danger' : (mlPrediction.priorityLevel === 'MEDIUM' ? 'warning' : 'info');
     req.io.emit('notify', {
-      tone: 'info',
-      title: 'New patient added',
-      message: `Token #${newToken.tokenNumber} — ${newToken.patientName}${doctorName ? ` → Dr. ${doctorName}` : ''}`
+      tone: alertTone,
+      title: mlPrediction.isEmergencyAlert ? '🚨 EMERGENCY PRIORITY ALERT' : 'New patient added',
+      message: `Token #${newToken.tokenNumber} — ${newToken.patientName} [${mlPrediction.priorityLevel} PRIORITY]${doctorName ? ` → Dr. ${doctorName}` : ''}`,
+      tokenNumber: newToken.tokenNumber
     });
-    res.status(201).json({ token: newToken, state });
+    res.status(201).json({ token: newToken, state, mlPrediction });
   } catch (err) { res.status(500).json({ error: 'Failed to add patient' }); }
 });
 
@@ -86,7 +104,7 @@ router.post('/queue/call-next', requireAuth, requireRole('staff', 'admin'), asyn
       await recordVisit(current, 'done');
     }
 
-    const next = await Token.findOne(waitFilter).sort({ tokenNumber: 1 });
+    const next = await Token.findOne(waitFilter).sort({ isEmergencyAlert: -1, priorityScore: -1, tokenNumber: 1 });
     if (next) {
       next.status = 'in_consultation';
       next.calledAt = new Date();
@@ -94,12 +112,12 @@ router.post('/queue/call-next', requireAuth, requireRole('staff', 'admin'), asyn
       req.io.to(`token:${next.tokenNumber}`).emit('notify', {
         tone: 'success',
         title: 'You are being called!',
-        message: `Token #${next.tokenNumber} — please proceed${next.doctorName ? ` to Dr. ${next.doctorName}` : ' to the consultation room'}.`,
+        message: `Token #${next.tokenNumber} (${next.patientName}) — please proceed${next.doctorName ? ` to Dr. ${next.doctorName}` : ' to the consultation room'}.`,
         tokenNumber: next.tokenNumber, patientName: next.patientName
       });
       req.io.emit('notify', {
         tone: 'info', title: 'Now calling',
-        message: `Token #${next.tokenNumber}${next.doctorName ? ` → Dr. ${next.doctorName}` : ''}`,
+        message: `Token #${next.tokenNumber} — ${next.patientName}${next.doctorName ? ` → Dr. ${next.doctorName}` : ''}`,
         tokenNumber: next.tokenNumber, patientName: next.patientName
       });
     }
@@ -125,7 +143,7 @@ router.post('/queue/skip', requireAuth, requireRole('staff', 'admin'), async (re
       await current.save();
       await recordVisit(current, 'skipped');
     }
-    const next = await Token.findOne(waitFilter).sort({ tokenNumber: 1 });
+    const next = await Token.findOne(waitFilter).sort({ isEmergencyAlert: -1, priorityScore: -1, tokenNumber: 1 });
     if (next) { next.status = 'in_consultation'; next.calledAt = new Date(); await next.save(); }
 
     const state = await buildQueueState(doctorId || null);

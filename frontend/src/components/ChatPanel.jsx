@@ -32,6 +32,19 @@ export default function ChatPanel({ tokenNumber }) {
     inputRef.current?.focus();
   }
 
+  const isStaff = user?.role === 'staff' || user?.role === 'admin';
+  const quickReplies = isStaff ? [
+    'Please wait 5–10 minutes.',
+    'Please proceed to Room 101.',
+    'The doctor is ready for you now.',
+    'Please check in with the nurse.'
+  ] : [
+    'How long is my wait time?',
+    'I have arrived at reception.',
+    'Can I step out for 5 minutes?',
+    'Is the doctor available?'
+  ];
+
   return (
     <div className="chat">
       <div className="chat__list" ref={listRef}>
@@ -52,6 +65,21 @@ export default function ChatPanel({ tokenNumber }) {
             </div>
           );
         })}
+      </div>
+
+      {/* Quick Suggestion Chips */}
+      <div style={{ padding: '4px 10px', display: 'flex', gap: 6, overflowX: 'auto', background: 'var(--color-surface-2)', borderTop: '1px solid var(--color-border)' }}>
+        {quickReplies.map((reply, i) => (
+          <button
+            key={i}
+            type="button"
+            className="btn btn--ghost"
+            style={{ padding: '3px 8px', fontSize: 11, whiteSpace: 'nowrap', borderRadius: 999 }}
+            onClick={() => send(reply)}
+          >
+            {reply}
+          </button>
+        ))}
       </div>
       <form className="chat__input" onSubmit={handleSubmit}>
         <input

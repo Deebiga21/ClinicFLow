@@ -24,7 +24,7 @@ async function buildQueueState(doctorId = null) {
   }
 
   const waitingTokens = await Token.find(waitFilter)
-    .sort({ tokenNumber: 1 })
+    .sort({ isEmergencyAlert: -1, priorityScore: -1, tokenNumber: 1 })
     .lean();
 
   const currentToken = await Token.findOne(consultFilter).lean();

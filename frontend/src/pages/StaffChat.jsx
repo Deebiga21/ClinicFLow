@@ -49,7 +49,7 @@ export default function StaffChat() {
               <button key={t._id} onClick={() => setActive(t.tokenNumber)}
                 className="sidebar__item chat-thread-btn" style={{ width: '100%', textAlign: 'left', border: 'none',
                   background: active === t.tokenNumber ? 'var(--color-primary-soft)' : 'transparent' }}>
-                <span style={{ fontFamily: 'Fraunces, serif', fontWeight: 600 }}>#{t.tokenNumber}</span>
+                <span style={{ fontWeight: 700 }}>#{t.tokenNumber}</span>
                 <span style={{ flex: 1 }}>{t.patientName}</span>
                 {t.isCurrent && <span className="badge badge--live">in room</span>}
               </button>

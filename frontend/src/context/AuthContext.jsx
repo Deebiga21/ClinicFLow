@@ -60,14 +60,15 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => setAuth(null), []);
 
-  const linkToken = useCallback(async (tokenNumber) => {
+  const linkToken = useCallback(async (tokenNumber, consultationReason) => {
     if (!auth) return;
     const data = await apiFetch(`${API_BASE}/auth/link-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
-      body: JSON.stringify({ tokenNumber })
+      body: JSON.stringify({ tokenNumber, consultationReason })
     });
     setAuth({ ...auth, user: { ...auth.user, linkedTokenNumber: data.linkedTokenNumber } });
+    return data;
   }, [auth]);
 
   // Update profile fields (display name, contact info, bio, preferences)

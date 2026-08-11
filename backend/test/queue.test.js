@@ -17,6 +17,7 @@ const { createFakeModel } = require('./fakeModel');
 
 const tokenModelPath = path.resolve(__dirname, '../models/Token.js');
 const settingsModelPath = path.resolve(__dirname, '../models/ClinicSettings.js');
+const visitRecordModelPath = path.resolve(__dirname, '../models/VisitRecord.js');
 
 const fakeToken = createFakeModel([], { status: 'waiting' });
 const fakeSettings = createFakeModel([], {
@@ -24,9 +25,14 @@ const fakeSettings = createFakeModel([], {
   lastIssuedToken: 0,
   currentlyServingToken: null
 });
+const fakeVisitRecord = createFakeModel([]);
 
 require.cache[tokenModelPath] = { id: tokenModelPath, filename: tokenModelPath, loaded: true, exports: fakeToken };
 require.cache[settingsModelPath] = { id: settingsModelPath, filename: settingsModelPath, loaded: true, exports: fakeSettings };
+require.cache[visitRecordModelPath] = { id: visitRecordModelPath, filename: visitRecordModelPath, loaded: true, exports: fakeVisitRecord };
+
+const { signToken } = require('../middleware/auth');
+const staffToken = signToken({ _id: '507f1f77bcf86cd799439011', role: 'staff', username: 'test-staff' });
 
 // Now require the real route logic — it will pick up our fakes via require.cache
 const queueRoutes = require('../routes/queue');
@@ -37,7 +43,10 @@ app.use(express.json());
 // Minimal fake io — just records emitted events instead of broadcasting over a socket
 const emittedEvents = [];
 app.use((req, res, next) => {
-  req.io = { emit: (event, payload) => emittedEvents.push({ event, payload }) };
+  req.io = {
+    emit: (event, payload) => emittedEvents.push({ event, payload }),
+    to: () => ({ emit: (event, payload) => emittedEvents.push({ event, payload }) })
+  };
   next();
 });
 app.use('/api', queueRoutes);
@@ -52,7 +61,10 @@ function request(method, path, body) {
       hostname: '127.0.0.1',
       port: server.address().port,
       path,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${staffToken}`
+      }
     };
     const req = http.request(opts, (res) => {
       let chunks = '';

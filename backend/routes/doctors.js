@@ -57,15 +57,37 @@ router.delete('/doctors/:id', requireAuth, requireRole('admin'), async (req, res
   } catch (err) { res.status(500).json({ error: 'Failed to delete doctor' }); }
 });
 
-// Toggle availability
-router.post('/doctors/:id/toggle-availability', requireAuth, requireRole('admin', 'staff'), async (req, res) => {
+// Seed multiple realistic doctors
+router.post('/doctors/seed', requireAuth, requireRole('admin', 'staff'), async (req, res) => {
   try {
-    const doc = await Doctor.findById(req.params.id);
-    if (!doc) return res.status(404).json({ error: 'Doctor not found' });
-    doc.isAvailable = !doc.isAvailable;
-    await doc.save();
-    res.json(doc);
-  } catch (err) { res.status(500).json({ error: 'Failed to toggle availability' }); }
+    const sampleDoctors = [
+      { name: 'Priya Sharma', department: 'Cardiology', specialization: 'Interventional Cardiologist', roomNumber: '101', avgConsultationTime: 12, isAvailable: true },
+      { name: 'Rajesh Gupta', department: 'General', specialization: 'Senior Physician & Diabetologist', roomNumber: '102', avgConsultationTime: 10, isAvailable: true },
+      { name: 'Ananya Verma', department: 'Pediatrics', specialization: 'Pediatric Specialist & Neonatologist', roomNumber: '103', avgConsultationTime: 15, isAvailable: true },
+      { name: 'Vikram Mehta', department: 'Neurology', specialization: 'Consultant Neurophysician', roomNumber: '201', avgConsultationTime: 15, isAvailable: true },
+      { name: 'Siddharth Rao', department: 'Orthopedics', specialization: 'Orthopedic & Joint Replacement Surgeon', roomNumber: '202', avgConsultationTime: 12, isAvailable: true },
+      { name: 'Kavita Patel', department: 'Dermatology', specialization: 'Cosmetologist & Skin Specialist', roomNumber: '203', avgConsultationTime: 10, isAvailable: true },
+      { name: 'Arjun Nair', department: 'Emergency', specialization: 'Trauma & Emergency Specialist', roomNumber: 'ER-1', avgConsultationTime: 8, isAvailable: true },
+      { name: 'Meera Iyer', department: 'ENT', specialization: 'Otolaryngologist & Head Surgeon', roomNumber: '301', avgConsultationTime: 10, isAvailable: true },
+      { name: 'Rohan Deshmukh', department: 'Ophthalmology', specialization: 'Cataract & Retina Specialist', roomNumber: '302', avgConsultationTime: 10, isAvailable: true },
+      { name: 'Sunita Reddy', department: 'Gynecology', specialization: 'Obstetrician & Gynecologist', roomNumber: '303', avgConsultationTime: 15, isAvailable: true },
+      { name: 'Amitabh Joshi', department: 'Psychiatry', specialization: 'Behavioral & Neuropsychiatrist', roomNumber: '401', avgConsultationTime: 20, isAvailable: true }
+    ];
+
+    const created = [];
+    for (const d of sampleDoctors) {
+      const exists = await Doctor.findOne({ name: d.name });
+      if (!exists) {
+        const newDoc = await Doctor.create({ ...d, createdBy: req.user.id });
+        created.push(newDoc);
+      }
+    }
+
+    const allDoctors = await Doctor.find().sort({ department: 1, name: 1 }).lean();
+    res.json({ message: `Seeded ${created.length} new doctors`, doctors: allDoctors });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to seed doctors' });
+  }
 });
 
 module.exports = router;

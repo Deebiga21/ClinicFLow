@@ -41,10 +41,21 @@ export function useQueueSocket() {
     socketRef.current = socket;
     const onConn = () => setConnected(true);
     const onDis  = () => setConnected(false);
-    const onUpd  = (d) => setQueueState(d);
+    const onUpd  = (d) => {
+      if (mounted) setQueueState(d);
+    };
+    const onNotify = () => {
+      fetch(`${API_BASE}/queue`).then(r => r.json()).then(d => {
+        if (mounted) setQueueState(d);
+      }).catch(() => {});
+    };
+
     socket.on('connect', onConn);
     socket.on('disconnect', onDis);
     socket.on('queueUpdated', onUpd);
+    socket.on('tokenLinked', onUpd);
+    socket.on('tokenCreated', onUpd);
+    socket.on('notify', onNotify);
     if (socket.connected) setConnected(true);
 
     return () => {
@@ -52,6 +63,9 @@ export function useQueueSocket() {
       socket.off('connect', onConn);
       socket.off('disconnect', onDis);
       socket.off('queueUpdated', onUpd);
+      socket.off('tokenLinked', onUpd);
+      socket.off('tokenCreated', onUpd);
+      socket.off('notify', onNotify);
     };
   }, [token]);
 

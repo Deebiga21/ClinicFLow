@@ -1,0 +1,28 @@
+{
+  "feature_names": [
+    "fever",
+    "cough",
+    "fatigue",
+    "nausea",
+    "muscle_pain",
+    "headache",
+    "diarrhea"
+  ],
+  "class_names": [
+    "Healthy / Minor Ailment",
+    "Viral Flu",
+    "Gastroenteritis",
+    "Dengue / Malaria",
+    "Respiratory Infection"
+  ],
+  "accuracy": 0.98125,
+  "feature_importances": {
+    "fever": 0.02025306038558483,
+    "cough": 0.18208907544612885,
+    "fatigue": 0.12588505446910858,
+    "nausea": 0.11024994403123856,
+    "muscle_pain": 0.09059590101242065,
+    "headache": 0.08708400279283524,
+    "diarrhea": 0.38384297490119934
+  }
+}

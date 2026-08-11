@@ -30,17 +30,17 @@ export default function Checkout() {
       </header>
       <div className="card" style={{ maxWidth: 480, textAlign: 'center', padding: 40 }}>
         {done ? (
-          <motion.div initial={{ scale: .8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+          <motion.div initial={{ scale: .9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
             <CheckCircle2 size={64} style={{ color: 'var(--color-primary)' }} />
-            <h2 style={{ fontFamily: 'Fraunces, serif', marginTop: 16 }}>You're all set!</h2>
+            <h2 style={{ marginTop: 16, fontWeight: 700, fontSize: 22 }}>You're all set!</h2>
             <p style={{ color: 'var(--color-ink-soft)' }}>Visit closed. Take care!</p>
           </motion.div>
         ) : user?.linkedTokenNumber ? (
           <>
-            <ClipboardCheck size={56} style={{ color: 'var(--color-accent)' }} />
-            <h2 style={{ fontFamily: 'Fraunces, serif', marginTop: 12 }}>Token #{user.linkedTokenNumber}</h2>
+            <ClipboardCheck size={56} style={{ color: 'var(--color-primary)' }} />
+            <h2 style={{ marginTop: 12, fontWeight: 700, fontSize: 24 }}>Token #{user.linkedTokenNumber}</h2>
             <p style={{ color: 'var(--color-ink-soft)' }}>Confirm you've completed your consultation.</p>
-            <button className="btn btn--accent" style={{ width: '100%', padding: 14 }} onClick={checkout}>
+            <button className="btn btn--primary" style={{ width: '100%', padding: 12 }} onClick={checkout}>
               Confirm check-out
             </button>
           </>

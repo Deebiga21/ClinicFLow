@@ -13,6 +13,9 @@ const appointmentRoutes = require('./routes/appointments');
 const analyticsRoutes   = require('./routes/analytics');
 const adminRoutes       = require('./routes/admin');
 const visitRoutes       = require('./routes/visits');
+const { router: mlRoutes } = require('./routes/ml');
+const treatmentsRoutes  = require('./routes/treatments');
+const clinicalAIRoutes  = require('./routes/clinicalAI');
 
 const Message = require('./models/Message');
 const { verifyToken } = require('./middleware/auth');
@@ -47,11 +50,22 @@ io.on('connection', (socket) => {
         senderName: senderName || '',
         text: text.trim()
       });
-      io.to(`token:${tokenNumber}`).emit('chat:message', {
+      const payload = {
         _id: msg._id, tokenNumber: msg.tokenNumber,
         senderRole: msg.senderRole, senderName: msg.senderName,
         text: msg.text, createdAt: msg.createdAt
-      });
+      };
+      io.to(`token:${tokenNumber}`).emit('chat:message', payload);
+      // Emit global notification for staff & nurses
+      io.emit('chat:new_message', payload);
+      if (senderRole !== 'staff') {
+        io.emit('notify', {
+          tone: 'info',
+          title: `💬 New Message from Token #${tokenNumber}`,
+          message: `${senderName || 'Patient'}: "${text.trim().slice(0, 45)}"`,
+          tokenNumber: msg.tokenNumber
+        });
+      }
     } catch (err) { console.error('chat:send error', err); }
   });
 });
@@ -69,6 +83,9 @@ app.use('/api',       appointmentRoutes);
 app.use('/api',       analyticsRoutes);
 app.use('/api',       adminRoutes);
 app.use('/api',       visitRoutes);
+app.use('/api',       mlRoutes);
+app.use('/api',       treatmentsRoutes);
+app.use('/api',       clinicalAIRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 

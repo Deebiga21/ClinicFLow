@@ -109,12 +109,135 @@ router.put('/me/password', requireAuth, async (req, res) => {
   }
 });
 
+const Token = require('../models/Token');
+const { buildQueueState } = require('../utils/queueHelpers');
+
+const ClinicSettings = require('../models/ClinicSettings');
+
 // Patients link themselves to a token (the receptionist gave them token N)
 router.post('/link-token', requireAuth, async (req, res) => {
-  if (req.user.role !== 'patient') return res.status(403).json({ error: 'Patients only' });
-  const { tokenNumber } = req.body;
-  await User.findByIdAndUpdate(req.user.id, { linkedTokenNumber: tokenNumber || null });
-  res.json({ ok: true, linkedTokenNumber: tokenNumber || null });
+  try {
+    if (req.user.role !== 'patient') return res.status(403).json({ error: 'Patients only' });
+    const { tokenNumber, consultationReason } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    let num = Number(tokenNumber);
+    const userName = user.displayName || user.username;
+
+    // Fetch current clinic settings & currently serving token
+    const settings = await ClinicSettings.findOne({ clinicId: 'default-clinic' }) || { lastIssuedToken: 0 };
+    const currentServing = await Token.findOne({ status: 'in_consultation' }).lean();
+
+    // Find highest token number issued in database or settings
+    const highestTokenDoc = await Token.findOne().sort({ tokenNumber: -1 }).lean();
+    const maxIssued = Math.max(
+      settings.lastIssuedToken || 0,
+      currentServing ? currentServing.tokenNumber : 0,
+      highestTokenDoc ? highestTokenDoc.tokenNumber : 0
+    );
+
+    let finalTokenNumber = num;
+    let isReassignedDueToAllotment = false;
+    let isRemappedOldToken = false;
+
+    if (num) {
+      const existingToken = await Token.findOne({ tokenNumber: num });
+      if (existingToken) {
+        // Check if token N is already allotted to ANOTHER patient
+        const belongsToDifferentUser = existingToken.patientUserId && existingToken.patientUserId.toString() !== user._id.toString();
+        const belongsToDifferentName = existingToken.patientName && existingToken.patientName.toLowerCase() !== userName.toLowerCase();
+
+        if (belongsToDifferentUser || (belongsToDifferentName && existingToken.patientUserId)) {
+          // Token N is already allotted to someone else (e.g. nurse added someone else for #56)
+          // Allot the NEXT available token number automatically!
+          finalTokenNumber = maxIssued + 1;
+          isReassignedDueToAllotment = true;
+        } else {
+          // Token N belongs to this patient or is an unlinked desk token -> update it cleanly
+          finalTokenNumber = num;
+          existingToken.patientUserId = user._id;
+          existingToken.patientName = userName;
+          existingToken.status = 'waiting';
+          if (consultationReason?.trim()) existingToken.consultationReason = consultationReason.trim();
+          await existingToken.save();
+        }
+      } else if (num <= maxIssued) {
+        // Requested number is <= maxIssued and doesn't exist -> assign next available
+        finalTokenNumber = maxIssued + 1;
+        isRemappedOldToken = true;
+      }
+    } else {
+      // No token number specified -> issue next token
+      finalTokenNumber = maxIssued + 1;
+    }
+
+    // If a new token document needs to be created for finalTokenNumber
+    let tokenDoc = await Token.findOne({ tokenNumber: finalTokenNumber });
+    if (!tokenDoc) {
+      tokenDoc = await Token.create({
+        tokenNumber: finalTokenNumber,
+        patientName: userName,
+        patientUserId: user._id,
+        status: 'waiting',
+        consultationReason: consultationReason?.trim() || 'General Consultation',
+        priorityLevel: 'LOW',
+        priorityScore: 20
+      });
+    } else if (isReassignedDueToAllotment || isRemappedOldToken) {
+      tokenDoc.patientUserId = user._id;
+      tokenDoc.patientName = userName;
+      tokenDoc.status = 'waiting';
+      if (consultationReason?.trim()) tokenDoc.consultationReason = consultationReason.trim();
+      await tokenDoc.save();
+    }
+
+    user.linkedTokenNumber = finalTokenNumber;
+    await user.save();
+
+    // Update lastIssuedToken in settings
+    await ClinicSettings.findOneAndUpdate(
+      { clinicId: 'default-clinic' },
+      { $max: { lastIssuedToken: finalTokenNumber } },
+      { upsert: true }
+    );
+
+    const state = await buildQueueState();
+    if (req.io) {
+      req.io.emit('queueUpdated', state);
+      req.io.emit('tokenLinked', state);
+      req.io.emit('tokenCreated', state);
+
+      let msg = `Token #${finalTokenNumber} linked to ${userName}`;
+      if (isReassignedDueToAllotment) {
+        msg = `Token #${num} was already allotted to another patient. Assigned Token #${finalTokenNumber} to ${userName}.`;
+      } else if (isRemappedOldToken) {
+        msg = `Token #${num} remapped to active Token #${finalTokenNumber} for ${userName}.`;
+      }
+
+      req.io.emit('notify', {
+        tone: isReassignedDueToAllotment ? 'warning' : 'info',
+        title: isReassignedDueToAllotment ? 'Token Allotment Conflict Resolved' : 'Patient Linked Token',
+        message: msg,
+        tokenNumber: finalTokenNumber
+      });
+    }
+
+    res.json({
+      ok: true,
+      linkedTokenNumber: finalTokenNumber,
+      isReassignedDueToAllotment,
+      isRemappedOldToken,
+      originalRequested: num,
+      message: isReassignedDueToAllotment
+        ? `Token #${num} was already allotted to another patient. You have been assigned Token #${finalTokenNumber}.`
+        : `Token #${finalTokenNumber} linked successfully.`,
+      state
+    });
+  } catch (err) {
+    console.error('Link token error:', err);
+    res.status(500).json({ error: 'Failed to link token' });
+  }
 });
 
 module.exports = router;

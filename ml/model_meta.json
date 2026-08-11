@@ -1,0 +1,28 @@
+{
+  "feature_names": [
+    "age",
+    "systolic_bp",
+    "diastolic_bp",
+    "heart_rate",
+    "spo2",
+    "temperature",
+    "pain_score",
+    "symptom_severity"
+  ],
+  "class_names": [
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+  ],
+  "accuracy": 0.89,
+  "feature_importances": {
+    "age": 0.05744178220629692,
+    "systolic_bp": 0.10915913432836533,
+    "diastolic_bp": 0.048038382083177567,
+    "heart_rate": 0.07772580534219742,
+    "spo2": 0.12515613436698914,
+    "temperature": 0.06442518532276154,
+    "pain_score": 0.1824028491973877,
+    "symptom_severity": 0.3356507122516632
+  }
+}

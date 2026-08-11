@@ -51,8 +51,8 @@ router.get('/appointments/:id', requireAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Failed to fetch appointment' }); }
 });
 
-// POST create appointment (staff or admin)
-router.post('/appointments', requireAuth, requireRole('admin', 'staff'), async (req, res) => {
+// POST create appointment (staff, admin, or patient)
+router.post('/appointments', requireAuth, requireRole('admin', 'staff', 'patient'), async (req, res) => {
   try {
     const { patientName, patientPhone, patientEmail, doctorId, scheduledDate, scheduledTime, reason } = req.body;
     if (!patientName || !doctorId || !scheduledDate || !scheduledTime) {
