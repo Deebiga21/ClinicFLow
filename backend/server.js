@@ -89,10 +89,22 @@ app.use('/api',       clinicalAIRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/clinic_queue';
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+const { MongoMemoryServer } = require('mongodb-memory-server');
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+async function startDatabaseAndServer() {
+  try {
+    const mongoServer = await MongoMemoryServer.create();
+    const mongoUri = mongoServer.getUri();
+    
+    await mongoose.connect(mongoUri);
+    console.log('MongoDB connected successfully to IN-MEMORY database (No installation required!)');
+    
+    server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+  } catch (err) {
+    console.error('Failed to start in-memory MongoDB:', err);
+  }
+}
+
+startDatabaseAndServer();
