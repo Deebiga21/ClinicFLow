@@ -88,6 +88,21 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-x: hidden;
 }
+
+/* Custom Scrollbar for Sidebar */
+.nav-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+.nav-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+.nav-scroll-area::-webkit-scrollbar-thumb {
+  background: var(--color-muted);
+  border-radius: 10px;
+}
+.nav-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-soft);
+}
 .sidebar.is-collapsed { width: 76px; }
 .sidebar__brand {
   font-size: 18px; font-weight: 700; letter-spacing: -.02em;

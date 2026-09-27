@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -6,7 +6,8 @@ import Logo from './Logo';
 import {
   LayoutDashboard, MessageSquare, Bell, Clock, LogOut,
   Settings, Sun, Moon, Menu, X, ClipboardCheck, HelpCircle, Stethoscope,
-  Activity, Brain, MonitorPlay, ChevronLeft, ChevronRight
+  Activity, Brain, MonitorPlay, ChevronLeft, ChevronRight, ChevronUp, ChevronDown,
+  AlertTriangle, Zap, Users, Sparkles, Box, MessageCircle, Eye, FileText
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -18,31 +19,20 @@ export default function Sidebar() {
   const isStaff = user?.role === 'staff' || user?.role === 'admin';
   const close = () => setOpen(false);
 
-  const staffItems = [
-    { to: '/desk',             icon: LayoutDashboard, label: 'Front Desk' },
-    { to: '/doctor-dashboard', icon: Stethoscope,     label: 'Doctor Console' },
-    { to: '/doctors',          icon: Stethoscope,     label: 'Manage Doctors' },
-    { to: '/treatments',       icon: Activity,        label: 'Treatments & Scans' },
-    { to: '/clinical-ai',      icon: Brain,           label: 'Clinica AI' },
-    { to: '/chat',             icon: MessageSquare,   label: 'Patient Chat' },
-    { to: '/assistant',        icon: HelpCircle,      label: 'Clinic Assistant' },
-    { to: '/public-queue',     icon: MonitorPlay,     label: 'Public TV Display' },
-    { to: '/wait-times',       icon: Clock,           label: 'Wait Times' },
-    { to: '/notifications',    icon: Bell,            label: 'Notifications' },
+  const items = [
+    { to: '/command-center',   icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/appointments',     icon: FileText,        label: 'Appointments' },
+    { to: '/desk',             icon: Activity,        label: 'Live Queue' },
+    { to: '/consultation',     icon: Stethoscope,     label: 'Consultation' },
+    { to: '/congestion',       icon: AlertTriangle,   label: 'Congestion' },
+    { to: '/doctors',          icon: Users,           label: 'Doctors' },
+    { to: '/chat',             icon: MessageCircle,   label: 'Nurse Chat' },
+    { to: '/medicine-intel',   icon: Box,             label: 'Medicine Intel' },
+    { to: '/med-schedule',     icon: Clock,           label: 'Med Schedule' },
+    { to: '/reports',          icon: FileText,        label: 'Reports' },
+    { to: '/feedback',         icon: MessageSquare,   label: 'Feedback' },
+    { to: '/settings',         icon: Settings,        label: 'Settings' },
   ];
-
-  const patientItems = [
-    { to: '/waiting-room', icon: LayoutDashboard, label: 'My Queue' },
-    { to: '/patient-portal', icon: Activity,      label: 'Patient Portal' },
-    { to: '/treatments',   icon: Activity,        label: 'Treatments & Scans' },
-    { to: '/clinical-ai',  icon: Brain,           label: 'Clinica AI' },
-    { to: '/chat',         icon: MessageSquare,   label: 'Chat with Staff' },
-    { to: '/assistant',    icon: HelpCircle,      label: 'Clinic Assistant' },
-    { to: '/wait-times',   icon: Clock,           label: 'Wait Times' },
-    { to: '/checkout',     icon: ClipboardCheck,  label: 'Check Out' },
-  ];
-
-  const items = isStaff ? staffItems : patientItems;
 
   return (
     <>
@@ -59,10 +49,10 @@ export default function Sidebar() {
 
       <aside className={`sidebar ${open ? 'is-open' : ''} ${isCollapsed ? 'is-collapsed' : ''}`}>
         <div className="sidebar__brand" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: isCollapsed ? 1 : 1, transition: '0.3s' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: isCollapsed ? 1 : 1, transition: '0.3s', textDecoration: 'none', color: 'inherit' }}>
             <Logo size={26} />
             <span style={{ display: isCollapsed ? 'none' : 'block' }}>ClinicFlow</span>
-          </div>
+          </Link>
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)} 
             className="btn btn--ghost" 
@@ -81,29 +71,31 @@ export default function Sidebar() {
           </button>
         </div>
 
-        <div className="sidebar__section">
-          {isStaff ? (user?.role === 'admin' ? 'Admin' : 'Staff') : 'Patient'}
+        <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px', overflowX: 'hidden' }} className="nav-scroll-area">
+          <div className="sidebar__section">
+            MAIN NAVIGATION
+          </div>
+
+          {items.map(({ to, icon: Icon, label }) => (
+            <NavLink key={to} to={to} onClick={close}
+              className={({ isActive }) => `sidebar__item ${isActive ? 'is-active' : ''}`}
+              style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Icon size={18} />
+                <span>{label}</span>
+              </div>
+              {label === 'Consultation' && <ChevronUp size={16} style={{ color: 'var(--color-muted)' }} />}
+              {label === 'Reports' && <ChevronDown size={16} style={{ color: 'var(--color-muted)' }} />}
+            </NavLink>
+          ))}
         </div>
 
-        {items.map(({ to, icon: Icon, label }) => (
-          <NavLink key={to} to={to} onClick={close}
-            className={({ isActive }) => `sidebar__item ${isActive ? 'is-active' : ''}`}>
-            <Icon size={18} /><span>{label}</span>
-          </NavLink>
-        ))}
-
-        <div className="sidebar__section">Account</div>
-        <NavLink to="/settings" onClick={close}
-          className={({ isActive }) => `sidebar__item ${isActive ? 'is-active' : ''}`}>
-          <Settings size={18} /><span>Settings</span>
-        </NavLink>
-        <button className="sidebar__item" onClick={toggle}
-          style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}>
-          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          <span>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
-        </button>
-
         <div className="sidebar__footer">
+          <button className="sidebar__item" onClick={toggle}
+            style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', padding: isCollapsed ? '12px' : '9px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            <span style={{ display: isCollapsed ? 'none' : 'block' }}>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
+          </button>
           <NavLink to="/settings" onClick={close} className="sidebar__user" style={{ textDecoration: 'none', color: 'inherit', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
             <div className="sidebar__avatar">
               {(user?.displayName || user?.username || 'U')[0].toUpperCase()}

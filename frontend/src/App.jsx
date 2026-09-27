@@ -20,11 +20,24 @@ import Treatments from './pages/Treatments';
 import ClinicalAI from './pages/ClinicalAI';
 import PatientPortal from './pages/PatientPortal';
 import PublicQueue from './pages/PublicQueue';
+import Congestion from './pages/Congestion';
+import DigitalTwin from './pages/DigitalTwin';
+
+import CommandCenter from './pages/CommandCenter';
+
+import Appointments from './pages/Appointments';
+import MedicineIntel from './pages/MedicineIntel';
+import MedSchedule from './pages/MedSchedule';
+import Feedback from './pages/Feedback';
+import Reports from './pages/Reports';
+
+// Placeholder components for new Clinic Operations pages
+const Placeholder = ({ title }) => <div style={{ padding: 40 }}><h1>{title}</h1><p>Module loading...</p></div>;
 
 function HomeRedirect() {
   const { user } = useAuth();
   if (!user) return <Landing />;
-  if (user.role === 'staff' || user.role === 'admin') return <Navigate to="/desk" replace />;
+  if (user.role === 'staff' || user.role === 'admin') return <Navigate to="/command-center" replace />;
   return <Navigate to="/waiting-room" replace />;
 }
 
@@ -35,6 +48,7 @@ export default function App() {
         <HashRouter>
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
+            <Route path="/command-center" element={<ProtectedRoute role="staff"><CommandCenter /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/desk" element={<ProtectedRoute role="staff"><ReceptionistScreen /></ProtectedRoute>} />
@@ -51,6 +65,16 @@ export default function App() {
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="/doctors" element={<ProtectedRoute role="staff"><DoctorConsult /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            
+            {/* New Clinic Operations Routes */}
+            <Route path="/appointments" element={<ProtectedRoute role="staff"><Appointments /></ProtectedRoute>} />
+            <Route path="/consultation" element={<ProtectedRoute role="staff"><DoctorConsult /></ProtectedRoute>} />
+            <Route path="/congestion" element={<ProtectedRoute role="staff"><Congestion /></ProtectedRoute>} />
+            <Route path="/medicine-intel" element={<ProtectedRoute role="staff"><MedicineIntel /></ProtectedRoute>} />
+            <Route path="/med-schedule" element={<ProtectedRoute role="staff"><MedSchedule /></ProtectedRoute>} />
+            <Route path="/feedback" element={<ProtectedRoute role="staff"><Feedback /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute role="staff"><Reports /></ProtectedRoute>} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </HashRouter>
