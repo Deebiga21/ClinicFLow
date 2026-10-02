@@ -67,3 +67,32 @@ def get_medication_schedules(patient_id: str):
             "SELECT * FROM medication_schedules WHERE patient_id = :patient_id"
         ), {"patient_id": patient_id}).mappings().all()
         return [dict(s) for s in schedules]
+
+from pydantic import BaseModel
+import uuid
+import datetime
+
+class CreateAppointmentRequest(BaseModel):
+    doctor_id: str
+    appointment_date: str
+    appointment_time: str
+    appointment_type: str
+
+@router.post("/api/patient/{patient_id}/appointments")
+def create_appointment(patient_id: str, req: CreateAppointmentRequest):
+    with orchestrator.Session() as session:
+        appt_id = str(uuid.uuid4())
+        session.execute(text("""
+            INSERT INTO appointments (id, patient_id, doctor_id, appointment_date, appointment_time, appointment_type, status, created_at, updated_at)
+            VALUES (:id, :pid, :did, :date, :time, :type, 'Scheduled', :now, :now)
+        """), {
+            "id": appt_id,
+            "pid": patient_id,
+            "did": req.doctor_id,
+            "date": req.appointment_date,
+            "time": req.appointment_time,
+            "type": req.appointment_type,
+            "now": datetime.datetime.now()
+        })
+        session.commit()
+        return {"status": "Success", "appointment_id": appt_id}
