@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FileText, Download } from 'lucide-react';
 import { API_BASE_URL } from '../config';
-import AppShell from '../components/AppShell';
 
 export default function Reports() {
   const [report, setReport] = useState(null);
@@ -17,29 +16,19 @@ export default function Reports() {
       setLoading(true);
       const res = await axios.get(`${API_BASE_URL}/reports/daily`);
       setReport(res.data.data || {});
-    } catch (error) {
       console.error('Failed to load reports', error);
-      // Dummy data for demo if API fails
-      setReport({
-        patients_served: 42,
-        appointments: 50,
-        average_wait: '24 min',
-        average_consultation: '14 min',
-        peak_hour: '11:00 AM',
-        congestion_events: 2,
-        doctor_workload: 'High (85%)'
-      });
+      // Remove dummy fallback as per instructions
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return <AppShell><div className="p-8 text-center">Loading Daily Reports...</div></AppShell>;
+    return <><div className="p-8 text-center">Loading Daily Reports...</div></>;
   }
 
   return (
-    <AppShell>
+    <>
       <div className="p-8" style={{ padding: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h1 className="text-2xl font-bold" style={{ fontSize: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -89,6 +78,6 @@ export default function Reports() {
           </table>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

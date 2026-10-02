@@ -63,22 +63,14 @@ export default function RealTimeGraphicDashboard({ queueState }) {
   // 4. Scatter Plot: Age vs Triage Score (Cluster Analytics)
   const scatterData = useMemo(() => {
     const realData = waitingList.map(t => ({
-      age: t.vitals?.age || Math.floor(Math.random() * 50) + 20, 
-      score: t.priorityScore || (t.priorityLevel === 'HIGH' ? 80 + Math.random()*20 : t.priorityLevel === 'MEDIUM' ? 40 + Math.random()*30 : 10 + Math.random()*20),
+      age: t.vitals?.age || 35, 
+      score: t.priorityScore || 50,
       name: t.patientName,
       type: 'Live Queue'
     }));
 
-    // Generate some simulated data for historical context so the scatter plot looks nicely populated
-    const simulated = Array.from({ length: 60 }).map((_, i) => {
-      // Create some realistic clustering (older patients = slightly higher risk)
-      const age = Math.floor(Math.random() * 60) + 18;
-      const baseScore = (age / 80) * 40; 
-      const score = Math.min(100, Math.max(0, baseScore + (Math.random() * 60 - 10)));
-      return { age, score: Math.round(score), name: `Historical #${i}`, type: 'Historical' };
-    });
-
-    return [...realData, ...simulated];
+    // Removed simulated fake data as per instructions
+    return [...realData];
   }, [waitingList]);
 
   return (

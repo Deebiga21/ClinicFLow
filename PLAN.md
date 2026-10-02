@@ -2,22 +2,22 @@
 
 ## Phase 1: Core Architecture & Realtime Foundation (In Progress)
 - [x] Analyze current frontend & backend structure
-- [ ] Overhaul `App.jsx` routing to match the new sidebar requirements
-- [ ] Implement the `GlobalLayout` component with the unified sidebar
-- [ ] Setup global WebSocket context (`WebSocketProvider`) in React to listen for system-wide broadcast events
-- [ ] Verify FastAPI WebSocket manager is capable of broadcasting standard events
+- [x] Overhaul `App.jsx` routing to match the new sidebar requirements
+- [x] Implement the `GlobalLayout` component with the unified sidebar
+- [x] Setup global WebSocket context (`WebSocketProvider`) in React to listen for system-wide broadcast events
+- [x] Verify FastAPI WebSocket manager is capable of broadcasting standard events
 
 ## Phase 2: Clinical Operations Pages
-- [ ] **Dashboard:** Build the command center with real-time stats, current queue, AI predictions, and doctor workload.
-- [ ] **Appointments:** Full CRUD for appointments, confirm/check-in/cancel/no-show actions triggering database updates.
-- [ ] **Live Queue:** Implement real-time token management, "Call Next" functionality, and wait time predictions.
-- [ ] **Consultation:** Build the doctor interface for starting/completing consultations, logging actual durations vs predictions, and creating prescriptions.
+- [x] **Dashboard:** Build the command center with real-time stats, current queue, AI predictions, and doctor workload.
+- [x] **Appointments:** Full CRUD for appointments, confirm/check-in/cancel/no-show actions triggering database updates.
+- [x] **Live Queue:** Implement real-time token management, "Call Next" functionality, and wait time predictions.
+- [x] **Consultation:** Build the doctor interface for starting/completing consultations, logging actual durations vs predictions, and creating prescriptions.
 
 ## Phase 3: Clinic Intelligence & Resources
-- [ ] **Congestion:** Visualize current and forecasted congestion with bottleneck analysis.
-- [ ] **Doctors:** Display doctor workloads, availability toggles, and performance metrics.
-- [ ] **Medicine Intel:** Implement inventory tracking, expiry intelligence (FEFO), and waste risk calculations.
-- [ ] **Med Schedule:** Generate dynamic patient schedules from prescriptions, track medication events (administered/skipped).
+- [x] **Congestion:** Visualize current and forecasted congestion with bottleneck analysis.
+- [x] **Doctors:** Display doctor workloads, availability toggles, and performance metrics.
+- [x] **Medicine Intel:** Implement inventory tracking, expiry intelligence (FEFO), and waste risk calculations.
+- [x] **Med Schedule:** Generate dynamic patient schedules from prescriptions, track medication events (administered/skipped).
 
 ## Phase 4: Analytics, Support & Polish
 - [ ] **Nurse Chat:** Connect the assistant page to real backend data APIs instead of mocked AI responses.

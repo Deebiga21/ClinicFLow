@@ -1,33 +1,61 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import AppShell from '../components/AppShell';
 import {
   Activity, AlertTriangle, ArrowRight, Brain, Clock, ChevronRight,
   TrendingUp, Users, Zap, CheckCircle2, ShieldAlert, Sparkles, Box,
-  MessageSquare, Sliders, Battery, FileText
+  MessageSquare, Sliders, Battery, FileText, RefreshCw, XCircle
 } from 'lucide-react';
+import { api } from '../services/api';
 
-export default function CommandCenter() {
+export default function AdminDashboard() {
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getDashboardOverview();
+      setDashboardData(data);
+    } catch (e) {
+      console.error('Failed to load dashboard:', e);
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/dashboard/overview')
-      .then(r => r.json())
-      .then(d => {
-        setDashboardData(d);
-        setLoading(false);
-      })
-      .catch(e => {
-        console.error('Failed to load dashboard:', e);
-        setLoading(false);
-      });
+    loadData();
   }, []);
 
+  if (loading && !dashboardData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-slate-500">
+        <RefreshCw size={32} className="animate-spin mb-4 text-sky-500" />
+        <p className="font-semibold text-sm tracking-wide">Loading Clinic Intelligence...</p>
+      </div>
+    );
+  }
+
+  if (error && !dashboardData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[60vh]">
+        <XCircle size={48} className="text-red-500 mb-4" />
+        <h2 className="text-xl font-bold text-slate-900 mb-2">Error Loading Dashboard</h2>
+        <p className="text-slate-500 mb-6 max-w-md text-center">{error}</p>
+        <button onClick={loadData} className="bg-slate-900 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-slate-800">
+          <RefreshCw size={16} /> Retry Connection
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <AppShell>
+    <>
       {/* 3. TOP HEADER */}
       <header className="flex justify-between items-center mb-6">
         <div>
@@ -74,8 +102,8 @@ export default function CommandCenter() {
             </div>
             <div className="h-10 w-full relative border-b border-white/10">
               <svg width="100%" height="40" preserveAspectRatio="none">
-                <path d="M 0,35 Q 25%,35 50%,20 T 100%,5" fill="none" stroke="#38bdf8" strokeWidth="3" />
-                <circle cx="50%" cy="20" r="4" fill="#38bdf8" />
+                <path d="M 0,35 Q 100,35 200,20 T 400,5" fill="none" stroke="#38bdf8" strokeWidth="3" />
+                <circle cx="200" cy="20" r="4" fill="#38bdf8" />
               </svg>
             </div>
             <div className="flex justify-center mt-3">
@@ -400,6 +428,6 @@ export default function CommandCenter() {
         </div>
       </div>
       
-    </AppShell>
+    </>
   );
 }

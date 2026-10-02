@@ -1,83 +1,115 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import { WebSocketProvider } from './context/WebSocketContext';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import ReceptionistScreen from './pages/ReceptionistScreen';
-import PatientScreen from './pages/PatientScreen';
-import Settings from './pages/Settings';
-import Checkout from './pages/Checkout';
-import WaitTimes from './pages/WaitTimes';
-import StaffChat from './pages/StaffChat';
-import NotificationsPage from './pages/Notifications';
-import Assistant from './pages/Assistant';
-import DoctorConsult from './pages/DoctorConsult';
+
+// Layouts
+import AdminLayout from './components/admin/AdminLayout';
+import PatientLayout from './components/patient/PatientLayout';
+
+// Admin Pages
+import AdminCommandCenter from './pages/admin/AdminCommandCenter';
+import AdminPatientFlow from './pages/admin/AdminPatientFlow';
+import AdminDoctorWorkload from './pages/admin/AdminDoctorWorkload';
+import AdminCongestion from './pages/admin/AdminCongestion';
+import AdminMLModels from './pages/admin/AdminMLModels';
+import AdminPredictions from './pages/admin/AdminPredictions';
+import AdminExplainability from './pages/admin/AdminExplainability';
+import AdminModelPerformance from './pages/admin/AdminModelPerformance';
+import AdminPredictionFeedback from './pages/admin/AdminPredictionFeedback';
+import AdminAnomalies from './pages/admin/AdminAnomalies';
+import AdminDigitalTwin from './pages/admin/AdminDigitalTwin';
+import AdminMedicine from './pages/admin/AdminMedicine';
+import AdminReports from './pages/admin/AdminReports';
+import AdminNotifications from './pages/admin/AdminNotifications';
+import AdminSettings from './pages/admin/AdminSettings';
+
+
+// Staff Dashboards
 import DoctorDashboard from './pages/DoctorDashboard';
-import Treatments from './pages/Treatments';
-import ClinicalAI from './pages/ClinicalAI';
-import PatientPortal from './pages/PatientPortal';
+import ReceptionistScreen from './pages/ReceptionistScreen';
+import NurseDashboard from './pages/NurseDashboard';
 import PublicQueue from './pages/PublicQueue';
-import Congestion from './pages/Congestion';
-import DigitalTwin from './pages/DigitalTwin';
-
-import CommandCenter from './pages/CommandCenter';
-
-import Appointments from './pages/Appointments';
+import PipelinePage from './pages/PipelinePage';
+import ClinicalAI from './pages/ClinicalAI';
 import MedicineIntel from './pages/MedicineIntel';
-import MedSchedule from './pages/MedSchedule';
-import Feedback from './pages/Feedback';
-import Reports from './pages/Reports';
 
-// Placeholder components for new Clinic Operations pages
-const Placeholder = ({ title }) => <div style={{ padding: 40 }}><h1>{title}</h1><p>Module loading...</p></div>;
+// Patient Pages
+import PatientHome from './pages/patient/PatientHome';
+import PatientVisit from './pages/patient/PatientVisit';
+import PatientJourney from './pages/patient/PatientJourney';
+import PatientAppointments from './pages/patient/PatientAppointments';
+import PatientPrescriptions from './pages/patient/PatientPrescriptions';
+import PatientMedications from './pages/patient/PatientMedications';
+import PatientNotifications from './pages/patient/PatientNotifications';
+import PatientProfile from './pages/patient/PatientProfile';
 
-function HomeRedirect() {
+function RoleRedirect() {
   const { user } = useAuth();
   if (!user) return <Landing />;
-  if (user.role === 'staff' || user.role === 'admin') return <Navigate to="/command-center" replace />;
-  return <Navigate to="/waiting-room" replace />;
+  if (user.role === 'admin' || user.role === 'staff') return <Navigate to="/admin" replace />;
+  return <Navigate to="/patient" replace />;
 }
 
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <HashRouter>
-          <Routes>
-            <Route path="/" element={<HomeRedirect />} />
-            <Route path="/command-center" element={<ProtectedRoute role="staff"><CommandCenter /></ProtectedRoute>} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/desk" element={<ProtectedRoute role="staff"><ReceptionistScreen /></ProtectedRoute>} />
-            <Route path="/doctor-dashboard" element={<ProtectedRoute role="staff"><DoctorDashboard /></ProtectedRoute>} />
-            <Route path="/waiting-room" element={<ProtectedRoute role="patient"><PatientScreen /></ProtectedRoute>} />
-            <Route path="/patient-portal" element={<ProtectedRoute role="patient"><PatientPortal /></ProtectedRoute>} />
-            <Route path="/treatments" element={<ProtectedRoute><Treatments /></ProtectedRoute>} />
-            <Route path="/clinical-ai" element={<ProtectedRoute><ClinicalAI /></ProtectedRoute>} />
-            <Route path="/public-queue" element={<PublicQueue />} />
-            <Route path="/chat" element={<ProtectedRoute><StaffChat /></ProtectedRoute>} />
-            <Route path="/assistant" element={<ProtectedRoute><Assistant /></ProtectedRoute>} />
-            <Route path="/wait-times" element={<ProtectedRoute><WaitTimes /></ProtectedRoute>} />
-            <Route path="/checkout" element={<ProtectedRoute role="patient"><Checkout /></ProtectedRoute>} />
-            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-            <Route path="/doctors" element={<ProtectedRoute role="staff"><DoctorConsult /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            
-            {/* New Clinic Operations Routes */}
-            <Route path="/appointments" element={<ProtectedRoute role="staff"><Appointments /></ProtectedRoute>} />
-            <Route path="/consultation" element={<ProtectedRoute role="staff"><DoctorConsult /></ProtectedRoute>} />
-            <Route path="/congestion" element={<ProtectedRoute role="staff"><Congestion /></ProtectedRoute>} />
-            <Route path="/medicine-intel" element={<ProtectedRoute role="staff"><MedicineIntel /></ProtectedRoute>} />
-            <Route path="/med-schedule" element={<ProtectedRoute role="staff"><MedSchedule /></ProtectedRoute>} />
-            <Route path="/feedback" element={<ProtectedRoute role="staff"><Feedback /></ProtectedRoute>} />
-            <Route path="/reports" element={<ProtectedRoute role="staff"><Reports /></ProtectedRoute>} />
+        <WebSocketProvider>
+          <HashRouter>
+            <Routes>
+              <Route path="/" element={<RoleRedirect />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </HashRouter>
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminCommandCenter />} />
+                <Route path="patient-flow" element={<AdminPatientFlow />} />
+                <Route path="doctor-workload" element={<AdminDoctorWorkload />} />
+                <Route path="congestion" element={<AdminCongestion />} />
+                <Route path="ml" element={<AdminMLModels />} />
+                <Route path="predictions" element={<AdminPredictions />} />
+                <Route path="explainability" element={<AdminExplainability />} />
+                <Route path="model-performance" element={<AdminModelPerformance />} />
+                <Route path="prediction-feedback" element={<AdminPredictionFeedback />} />
+                <Route path="anomalies" element={<AdminAnomalies />} />
+                <Route path="digital-twin" element={<AdminDigitalTwin />} />
+                <Route path="medicines" element={<AdminMedicine />} />
+                <Route path="reports" element={<AdminReports />} />
+                <Route path="notifications" element={<AdminNotifications />} />
+                <Route path="settings" element={<AdminSettings />} />
+              </Route>
+
+              
+              {/* Staff Routes */}
+              <Route path="/doctor" element={<DoctorDashboard />} />
+              <Route path="/reception" element={<ReceptionistScreen />} />
+              <Route path="/nurse" element={<NurseDashboard />} />
+              <Route path="/queue" element={<PublicQueue />} />
+              <Route path="/pipeline" element={<PipelinePage />} />
+              <Route path="/clinical-ai" element={<ClinicalAI />} />
+              <Route path="/pharmacy" element={<MedicineIntel />} />
+              {/* Patient Routes */}
+              <Route path="/patient" element={<PatientLayout />}>
+                <Route index element={<PatientHome />} />
+                <Route path="my-visit" element={<PatientVisit />} />
+                <Route path="journey" element={<PatientJourney />} />
+                <Route path="appointments" element={<PatientAppointments />} />
+                <Route path="prescriptions" element={<PatientPrescriptions />} />
+                <Route path="medications" element={<PatientMedications />} />
+                <Route path="notifications" element={<PatientNotifications />} />
+                <Route path="profile" element={<PatientProfile />} />
+              </Route>
+
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </HashRouter>
+        </WebSocketProvider>
       </AuthProvider>
     </ThemeProvider>
   );

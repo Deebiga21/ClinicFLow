@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import AppShell from '../components/AppShell';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../config';
 import { ClipboardCheck, CheckCircle2 } from 'lucide-react';
@@ -21,7 +20,7 @@ export default function Checkout() {
   }
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Instant Check-Out</h1>
@@ -48,6 +47,6 @@ export default function Checkout() {
           <p style={{ color: 'var(--color-muted)' }}>Link a token from the Waiting Room first.</p>
         )}
       </div>
-    </AppShell>
+    </>
   );
 }

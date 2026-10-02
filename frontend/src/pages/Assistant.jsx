@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import AppShell from '../components/AppShell';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { useQueueSocket } from '../hooks/useQueueSocket';
@@ -122,7 +121,7 @@ export default function Assistant() {
   const isCalled = queueState?.currentToken?.tokenNumber === user?.linkedTokenNumber;
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -196,6 +195,6 @@ export default function Assistant() {
         <Logo size={14} />ClinicFlow Virtual Helper · Live queue integration
       </p>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </AppShell>
+    </>
   );
 }

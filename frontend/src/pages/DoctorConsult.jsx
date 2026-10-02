@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import AppShell from '../components/AppShell';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../config';
 import {
@@ -273,7 +272,7 @@ export default function DoctorConsult() {
   const avCount = doctors.filter(d => d.isAvailable).length;
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -361,6 +360,6 @@ export default function DoctorConsult() {
         {showAdd && <AddModal token={token} onAdded={d => setDoctors(prev => [d, ...prev])} onClose={() => setShowAdd(false)} />}
       </AnimatePresence>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </AppShell>
+    </>
   );
 }

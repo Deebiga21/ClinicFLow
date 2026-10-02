@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import AppShell from '../components/AppShell';
 import { isSoundEnabled, setSoundEnabled, playChime } from '../utils/sound';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -103,7 +102,7 @@ export default function Settings() {
   const card = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } };
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Settings</h1>
@@ -263,6 +262,6 @@ export default function Settings() {
 
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </AppShell>
+    </>
   );
 }

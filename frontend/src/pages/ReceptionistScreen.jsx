@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQueueSocket } from '../hooks/useQueueSocket';
 import { API_BASE } from '../config';
 import { useAuth } from '../context/AuthContext';
-import AppShell from '../components/AppShell';
 import { UserPlus, PhoneCall, SkipForward, RotateCcw, Clock, Megaphone, Activity, AlertTriangle, ShieldAlert, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function ReceptionistScreen() {
@@ -124,13 +123,13 @@ export default function ReceptionistScreen() {
     } catch (err) { alert(err.message); }
   }
 
-  if (loading) return <AppShell><div style={{ padding: 40 }}>Loading queue…</div></AppShell>;
+  if (loading) return <><div style={{ padding: 40 }}>Loading queue…</div></>;
 
   const current = queueState?.currentToken;
   const waiting = queueState?.waitingQueue || [];
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Front Desk & Triage</h1>
@@ -407,7 +406,7 @@ export default function ReceptionistScreen() {
           </div>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }
 

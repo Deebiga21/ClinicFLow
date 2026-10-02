@@ -1,0 +1,68 @@
+You are an expert React developer. Build out the COMPLETE CONTENT AND FUNCTIONALITY for the following ClinicFlow Admin pages:
+1. src/pages/admin/AdminExplainability.jsx
+2. src/pages/admin/AdminModelPerformance.jsx
+3. src/pages/admin/AdminPredictionFeedback.jsx
+4. src/pages/admin/AdminAnomalies.jsx
+5. src/pages/admin/AdminDigitalTwin.jsx
+
+Strict Rules:
+1. Visual Design: Use the existing shared components (`ChartCard`, `MetricCard`, `StatusBadge`, `LoadingState`, `EmptyState`). Use Recharts for charts. Use `lucide-react` for icons. Layouts must be dense, professional, and matching the light healthcare SaaS style.
+2. NO MOCK DATA: Do NOT use `Math.random()`, dummy arrays, or hardcoded fake metrics. If data doesn't exist, show "DATA UNAVAILABLE" or "NOT TRAINED".
+3. REALTIME: Assume there is a custom hook `useClinicWebSocket` in `src/hooks/useClinicWebSocket.js` returning `{ lastEvent }` which you should use to optionally trigger refetches.
+4. API Connection: Fetch actual data from `api.js`. Add new endpoints to `src/services/api.js` if necessary.
+
+Below is the user specification for your pages:
+
+7. EXPLAINABLE AI
+=================
+ROUTE: /admin/explainability
+TITLE: Explainable AI
+SUBTITLE: Understand why ClinicFlow generated a prediction.
+SELECT MODEL: Waiting Time, Consultation Duration, Congestion, Other supported models
+EXPLANATION: Prediction, Top contributing features, Positive contribution, Negative contribution, SHAP chart if available
+EXAMPLE: WAITING TIME: 27 MINUTES. Factors: Patients Ahead, Queue Length, Doctor Workload, Historical Consultation Duration, Arrival Rate
+IMPORTANT: Only use real SHAP/model explanation. Never create fake feature contribution numbers. If unavailable: Explanation unavailable.
+
+8. MODEL PERFORMANCE
+====================
+ROUTE: /admin/model-performance
+TITLE: Model Performance
+SUBTITLE: Evaluate ClinicFlow prediction quality.
+MODEL CARDS: Waiting Time, Consultation Duration, No-Show, Congestion, Anomaly Detection, Doctor Workload, Medicine Demand
+REGRESSION METRICS: MAE, RMSE, R²
+CLASSIFICATION METRICS: Precision, Recall, F1, ROC-AUC
+ADDITIONAL INFORMATION: Training Dataset, Test Dataset, Training Date, Model Version, Last Evaluation
+CHARTS: Actual vs Predicted, Error Distribution, Performance over time. Only create charts where actual evaluation data exists.
+
+9. PREDICTION VS ACTUAL
+=======================
+ROUTE: /admin/prediction-feedback
+TITLE: Prediction vs Actual
+SUBTITLE: Measure how predictions compare with real clinic outcomes.
+MAIN CONCEPT: PREDICTION ↓ REAL OUTCOME ↓ COMPARISON ↓ ERROR ↓ FEEDBACK
+TABLE: Prediction Type, Predicted, Actual, Absolute Error, Timestamp, Model Version
+CHARTS: Predicted vs Actual, Error Over Time, Average Error, Model Error Trend
+PURPOSE: This page demonstrates ClinicFlow's closed-loop learning concept. Do not claim that the model automatically retrains unless that functionality actually exists.
+
+10. ANOMALY CENTER
+==================
+ROUTE: /admin/anomalies
+TITLE: Operational Anomaly Center
+SUBTITLE: Detect unusual clinic operational patterns.
+ANOMALY TYPES: Unusually long consultation, Sudden arrival spike, Unexpected queue growth, Abnormal waiting time, Unexpected doctor workload, Unusual medicine usage
+ANOMALY CARD: Type, Timestamp, Observed Value, Expected Value, Severity, Status, Explanation if available
+FILTERS: Today, This Week, All, Anomaly Type, Severity
+IMPORTANT: This is operational anomaly detection. Do NOT turn this into medical diagnosis.
+
+11. DIGITAL TWIN
+================
+ROUTE: /admin/digital-twin
+TITLE: Clinic Digital Twin
+SUBTITLE: Simulate operational scenarios before changing the real clinic.
+CONTROL PANEL: Number of Doctors, Arrival Rate, Average Consultation Duration, Appointment Capacity, Working Hours
+BUTTON: RUN SIMULATION
+OUTPUT: Expected Queue, Expected Wait, Congestion, Doctor Utilization, Patient Throughput
+COMPARISON: CURRENT vs SIMULATED. Show resulting operational differences.
+IMPORTANT: Clearly display: SIMULATION — NOT REAL-TIME CLINICAL PREDICTION. Do not present simulation results as actual future outcomes.
+
+Write out the complete React code for these 5 files. Make sure they export default correctly and do NOT include any Syntax Errors.

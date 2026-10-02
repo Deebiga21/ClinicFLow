@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueueSocket } from '../hooks/useQueueSocket';
 import { useAuth } from '../context/AuthContext';
-import AppShell from '../components/AppShell';
 import ChatPanel from '../components/ChatPanel';
 import VoiceAssistant from '../components/VoiceAssistant';
 import { API_BASE } from '../config';
@@ -14,7 +13,7 @@ export default function PatientScreen() {
   const [tokenInput, setTokenInput] = useState('');
   const [reasonInput, setReasonInput] = useState('');
 
-  if (loading) return <AppShell><div style={{ padding: 40 }}>Loading…</div></AppShell>;
+  if (loading) return <><div style={{ padding: 40 }}>Loading…</div></>;
 
   const current = queueState?.currentToken;
   const myTokenNumber = user?.linkedTokenNumber;
@@ -32,7 +31,7 @@ export default function PatientScreen() {
   }
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Waiting Room</h1>
@@ -278,6 +277,6 @@ export default function PatientScreen() {
           suggestedToken={(current?.tokenNumber || queueState?.lastIssuedToken || 0) + 1} 
         />
       )}
-    </AppShell>
+    </>
   );
 }

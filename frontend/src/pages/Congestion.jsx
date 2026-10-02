@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import AppShell from '../components/AppShell';
 import { Activity, AlertTriangle } from 'lucide-react';
 
 export default function Congestion() {
@@ -20,7 +19,7 @@ export default function Congestion() {
   }, []);
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Congestion Intelligence</h1>
@@ -60,6 +59,6 @@ export default function Congestion() {
       ) : (
         <div className="card" style={{ color: 'red' }}>Failed to load congestion predictions. Ensure the Python ML engine is running.</div>
       )}
-    </AppShell>
+    </>
   );
 }

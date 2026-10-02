@@ -1,11 +1,10 @@
-import AppShell from '../components/AppShell';
 import { useNotifications } from '../hooks/useNotifications';
 import { Bell } from 'lucide-react';
 
 export default function NotificationsPage() {
   const { items } = useNotifications();
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Notifications</h1>
@@ -24,6 +23,6 @@ export default function NotificationsPage() {
           </div>
         ))}
       </div>
-    </AppShell>
+    </>
   );
 }

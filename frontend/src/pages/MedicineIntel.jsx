@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Box, AlertTriangle, Package, Activity } from 'lucide-react';
 import { API_BASE_URL } from '../config';
-import AppShell from '../components/AppShell';
 
 export default function MedicineIntel() {
   const [inventory, setInventory] = useState([]);
@@ -34,7 +33,7 @@ export default function MedicineIntel() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="p-8" style={{ padding: '2rem' }}>
         <h1 className="text-2xl font-bold mb-6" style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Box /> Medicine Intelligence
@@ -105,6 +104,6 @@ export default function MedicineIntel() {
           </div>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

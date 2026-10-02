@@ -13,10 +13,31 @@ router = APIRouter()
 async def get_appointments():
     cursor = database.appointments.find({})
     appointments = await cursor.to_list(length=100)
-    # Convert _id to id string for frontend
+    
+    # Collect IDs for batch fetching
+    patient_ids = [ObjectId(appt["patient_id"]) for appt in appointments if ObjectId.is_valid(appt.get("patient_id"))]
+    doctor_ids = [ObjectId(appt["doctor_id"]) for appt in appointments if ObjectId.is_valid(appt.get("doctor_id"))]
+    
+    # Fetch patients and doctors
+    patients_cursor = database.patients.find({"_id": {"$in": patient_ids}})
+    patients = {str(p["_id"]): p async for p in patients_cursor}
+    
+    doctors_cursor = database.doctors.find({"_id": {"$in": doctor_ids}})
+    doctors = {str(d["_id"]): d async for d in doctors_cursor}
+
     for appt in appointments:
         appt["id"] = str(appt["_id"])
         del appt["_id"]
+        
+        # Enrich data
+        p_id = appt.get("patient_id")
+        d_id = appt.get("doctor_id")
+        if p_id in patients:
+            appt["patient_name"] = patients[p_id].get("name", "Unknown Patient")
+            appt["patient_contact"] = patients[p_id].get("contact", "")
+        if d_id in doctors:
+            appt["doctor_name"] = doctors[d_id].get("name", "Unknown Doctor")
+
     return StandardResponse(success=True, data=appointments)
 
 @router.post("/", response_model=StandardResponse)
@@ -92,3 +113,56 @@ async def check_in_appointment(appointment_id: str):
     await manager.broadcast({"event": "journey_updated", "data": {"patient_id": appointment["patient_id"], "stage": "Registration"}})
     
     return StandardResponse(success=True, data={"message": "Checked in successfully"})
+
+@router.post("/{appointment_id}/status", response_model=StandardResponse)
+async def update_appointment_status(appointment_id: str, status: str):
+    if not ObjectId.is_valid(appointment_id):
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    valid_statuses = ["Confirmed", "Cancelled", "No-Show"]
+    if status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of {valid_statuses}")
+
+    appointment = await database.appointments.find_one({"_id": ObjectId(appointment_id)})
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    await database.appointments.update_one(
+        {"_id": ObjectId(appointment_id)},
+        {"$set": {"status": status}}
+    )
+    
+    # Broadcast event
+    await manager.broadcast({"event": "appointment_updated", "data": {"appointment_id": appointment_id, "status": status}})
+    
+    return StandardResponse(success=True, data={"message": f"Appointment status updated to {status}"})
+
+@router.delete("/{appointment_id}", response_model=StandardResponse)
+async def delete_appointment(appointment_id: str):
+    if not ObjectId.is_valid(appointment_id):
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+    
+    result = await database.appointments.delete_one({"_id": ObjectId(appointment_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+        
+    await manager.broadcast({"event": "appointment_deleted", "data": {"appointment_id": appointment_id}})
+    return StandardResponse(success=True, data={"message": "Appointment deleted successfully"})
+
+@router.put("/{appointment_id}", response_model=StandardResponse)
+async def update_appointment(appointment_id: str, appointment: AppointmentCreate):
+    if not ObjectId.is_valid(appointment_id):
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+        
+    appt_dict = appointment.dict(exclude_unset=True)
+    
+    result = await database.appointments.update_one(
+        {"_id": ObjectId(appointment_id)},
+        {"$set": appt_dict}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+        
+    await manager.broadcast({"event": "appointment_updated", "data": {"appointment_id": appointment_id}})
+    return StandardResponse(success=True, data={"message": "Appointment updated successfully"})

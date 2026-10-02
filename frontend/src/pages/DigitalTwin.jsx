@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import AppShell from '../components/AppShell';
 import { Box, Play, ArrowRight } from 'lucide-react';
 
 export default function DigitalTwin() {
@@ -31,7 +30,7 @@ export default function DigitalTwin() {
   };
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Digital Twin Simulation</h1>
@@ -97,6 +96,6 @@ export default function DigitalTwin() {
           )}
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

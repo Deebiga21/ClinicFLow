@@ -32,7 +32,7 @@ app.include_router(congestion.router, prefix="/api/congestion", tags=["congestio
 app.include_router(digital_twin.router, prefix="/api/digital_twin", tags=["digital_twin"])
 app.include_router(appointments.router, prefix="/api/appointments", tags=["appointments"])
 app.include_router(queue.router, prefix="/api/queue", tags=["queue"])
-from app.api import medicines, medications, feedback, reports, doctors, chat, consultations, settings
+from app.api import medicines, medications, feedback, reports, doctors, chat, consultations, settings, patient
 app.include_router(medicines.router, prefix="/api/medicines", tags=["medicines"])
 app.include_router(medications.router, prefix="/api/medications", tags=["medications"])
 app.include_router(feedback.router, prefix="/api/feedback", tags=["feedback"])
@@ -41,6 +41,7 @@ app.include_router(doctors.router, prefix="/api/doctors", tags=["doctors"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(consultations.router, prefix="/api/consultations", tags=["consultations"])
 app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
+app.include_router(patient.router, prefix="/api/patient", tags=["patient"])
 
 socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
 

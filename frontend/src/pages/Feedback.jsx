@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MessageSquare, BarChart2 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
-import AppShell from '../components/AppShell';
 
 export default function Feedback() {
   const [feedbackList, setFeedbackList] = useState([]);
@@ -19,30 +18,19 @@ export default function Feedback() {
       const res = await axios.get(`${API_BASE_URL}/feedback/prediction`);
       setFeedbackList(res.data.data.list || []);
       setSummary(res.data.data.summary || {});
-    } catch (error) {
       console.error('Failed to load feedback', error);
-      // Dummy data for demo if API fails
-      setSummary({
-        average_error: '4.2 min',
-        overprediction: '12%',
-        underprediction: '8%',
-        accuracy: '88%'
-      });
-      setFeedbackList([
-        { id: 1, type: 'Wait Time', predicted: 32, actual: 28, error: 4, date: new Date().toISOString() },
-        { id: 2, type: 'Consultation', predicted: 15, actual: 22, error: 7, date: new Date().toISOString() }
-      ]);
+      // Remove dummy fallback as per instructions
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return <AppShell><div className="p-8 text-center">Loading Prediction Feedback...</div></AppShell>;
+    return <><div className="p-8 text-center">Loading Prediction Feedback...</div></>;
   }
 
   return (
-    <AppShell>
+    <>
       <div className="p-8" style={{ padding: '2rem' }}>
         <h1 className="text-2xl font-bold mb-6" style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <MessageSquare /> AI Prediction Feedback
@@ -100,6 +88,6 @@ export default function Feedback() {
           )}
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

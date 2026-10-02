@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import AppShell from '../components/AppShell';
 import ChatPanel from '../components/ChatPanel';
 import { useQueueSocket } from '../hooks/useQueueSocket';
 import { useAuth } from '../context/AuthContext';
@@ -29,7 +28,7 @@ export default function StaffChat() {
   const activeToken = tokens.find(t => t.tokenNumber === active);
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title">{isStaff ? 'Patient Chat' : 'Chat with Staff'}</h1>
@@ -77,6 +76,6 @@ export default function StaffChat() {
             : <div style={{ color: 'var(--color-muted)', textAlign: 'center', padding: 30 }}>Link your token from the Waiting Room to start chatting.</div>}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

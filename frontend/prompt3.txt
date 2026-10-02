@@ -1,0 +1,55 @@
+You are an expert React developer. Build out the COMPLETE CONTENT AND FUNCTIONALITY for the following ClinicFlow Admin pages:
+1. src/pages/admin/AdminMedicine.jsx
+2. src/pages/admin/AdminReports.jsx
+3. src/pages/admin/AdminNotifications.jsx
+4. src/pages/admin/AdminSettings.jsx
+
+Strict Rules:
+1. Visual Design: Use the existing shared components (`ChartCard`, `MetricCard`, `StatusBadge`, `LoadingState`, `EmptyState`). Use Recharts for charts. Use `lucide-react` for icons. Layouts must be dense, professional, and matching the light healthcare SaaS style.
+2. NO MOCK DATA: Do NOT use `Math.random()`, dummy arrays, or hardcoded fake metrics. If data doesn't exist, show "DATA UNAVAILABLE" or "NOT TRAINED".
+3. REALTIME: Assume there is a custom hook `useClinicWebSocket` in `src/hooks/useClinicWebSocket.js` returning `{ lastEvent }` which you should use to optionally trigger refetches.
+4. API Connection: Fetch actual data from `api.js`. Add new endpoints to `src/services/api.js` if necessary.
+
+Below is the user specification for your pages:
+
+12. MEDICINE INTELLIGENCE
+=========================
+ROUTE: /admin/medicines
+TITLE: Medicine Intelligence
+SUBTITLE: Monitor inventory, demand and expiry risk.
+SUMMARY: Current Stock, Expected Demand, Low Stock, Expiring Soon, Stockout Risk, Expected Remaining
+MEDICINE TABLE: Medicine, Batch, Current Quantity, Expiry Date, Days Remaining, Expected Usage, Expected Remaining, Stock Risk, Expiry Risk
+EXPIRY ALERTS: Medicine, Batch, Expiry Date, Days Remaining, Current Stock, Expected Usage, Expected Leftover, Risk
+DEMAND FORECAST: Historical usage, Expected demand, Expected remaining, Forecast period. If medicine demand model is not trained: MODEL NOT TRAINED. Do not fabricate demand predictions.
+IMPORTANT: This is inventory intelligence. Do not recommend alternative medicines. Do not change prescriptions.
+
+13. REPORTS
+===========
+ROUTE: /admin/reports
+TITLE: Clinic Intelligence Reports
+SUBTITLE: Generate operational and ML reports from actual system data.
+REPORT TYPES: 1. Daily Clinic Report 2. Patient Flow Report 3. Doctor Workload Report 4. Medicine Intelligence Report 5. ML Model Performance Report 6. Prediction Accuracy Report 7. Congestion Report 8. Anomaly Report
+REPORT CARD: Report Name, Description, Date Range, Generate, View, Download if implemented. Do not create download buttons unless download functionality exists.
+
+14. NOTIFICATIONS
+=================
+ROUTE: /admin/notifications
+TITLE: Notifications
+SUBTITLE: Clinic operational and ML alerts.
+NOTIFICATION TYPES: Congestion Alert, Prediction Alert, Anomaly Alert, Medicine Alert, System Alert, Model Alert
+EACH NOTIFICATION: Icon, Title, Message, Timestamp, Severity, Read/Unread
+EXAMPLES: Predicted congestion peak approaching. Medicine expiry risk detected. Waiting-time model prediction updated. Unusual consultation duration detected. Do not generate notifications randomly.
+
+15. SETTINGS
+============
+ROUTE: /admin/settings
+TITLE: System Settings
+SUBTITLE: Configure ClinicFlow administrative preferences.
+SECTIONS: Clinic Information (Clinic Name, Operating Hours, Working Days)
+DISPLAY: Theme, Dark Mode, Sidebar State
+NOTIFICATIONS: Operational Alerts, Prediction Alerts, Medicine Alerts, Anomaly Alerts
+PREDICTION SETTINGS: Only include actual configurable settings.
+SYSTEM: Backend Status, Database Status, ML Service Status, WebSocket Status
+IMPORTANT: Do not show fake "connected" statuses. Read actual health/status endpoints.
+
+Write out the complete React code for these 4 files. Make sure they export default correctly and do NOT include any Syntax Errors.

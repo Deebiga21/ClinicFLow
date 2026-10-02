@@ -1,16 +1,15 @@
 import { motion } from 'framer-motion';
-import AppShell from '../components/AppShell';
 import { useQueueSocket } from '../hooks/useQueueSocket';
 import { Clock } from 'lucide-react';
 
 export default function WaitTimes() {
   const { queueState, connected, loading } = useQueueSocket();
-  if (loading) return <AppShell><div style={{ padding: 40 }}>Loading…</div></AppShell>;
+  if (loading) return <><div style={{ padding: 40 }}>Loading…</div></>;
   const waiting = queueState?.waitingQueue || [];
   const avg = queueState?.avgConsultationTime ?? 0;
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Dynamic Wait Times</h1>
@@ -49,6 +48,6 @@ export default function WaitTimes() {
           </motion.div>
         ))}
       </div>
-    </AppShell>
+    </>
   );
 }

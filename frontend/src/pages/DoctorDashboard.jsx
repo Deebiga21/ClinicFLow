@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import AppShell from '../components/AppShell';
 import { useAuth } from '../context/AuthContext';
 import { useQueueSocket } from '../hooks/useQueueSocket';
 import { API_BASE } from '../config';
@@ -184,7 +183,7 @@ export default function DoctorDashboard() {
     w.setTimeout(() => { w.print(); }, 250);
   }
 
-  if (loading) return <AppShell><div style={{ padding: 40 }}>Loading Doctor Dashboard…</div></AppShell>;
+  if (loading) return <><div style={{ padding: 40 }}>Loading Doctor Dashboard…</div></>;
 
   // Queue state filtered for selected doctor
   const waitingQueue = queueState?.waitingQueue || [];
@@ -192,7 +191,7 @@ export default function DoctorDashboard() {
   const highPriorityCount = waitingQueue.filter(t => t.priorityLevel === 'HIGH' || t.isEmergencyAlert).length;
 
   return (
-    <AppShell>
+    <>
       <header className="page-header">
         <div>
           <h1 className="page-header__title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -504,6 +503,6 @@ export default function DoctorDashboard() {
           </AnimatePresence>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

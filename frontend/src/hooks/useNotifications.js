@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getSocket } from './useQueueSocket';
+import { useWebSocket } from '../context/WebSocketContext';
 import { useAuth } from '../context/AuthContext';
 import { playChime, playCallAlert } from '../utils/sound';
 
@@ -7,6 +7,7 @@ let nextId = 1;
 
 export function useNotifications() {
   const { token } = useAuth() || {};
+  const { socket } = useWebSocket();
   const [items, setItems] = useState([]);
 
   const push = useCallback((n) => {
@@ -16,18 +17,15 @@ export function useNotifications() {
   }, []);
 
   useEffect(() => {
-    const socket = getSocket(token);
+    if (!socket) return;
     const handler = (n) => {
-      // "You are being called!" is the targeted alert sent only to the
-      // specific patient's room — give it a distinct, louder sound so it
-      // actually grabs attention if the tab isn't focused.
       if (n.title === 'You are being called!') playCallAlert();
       else playChime();
       push(n);
     };
     socket.on('notify', handler);
     return () => socket.off('notify', handler);
-  }, [token, push]);
+  }, [socket, push]);
 
   const dismiss = (id) => setItems(prev => prev.filter(x => x.id !== id));
   return { items, push, dismiss };

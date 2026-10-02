@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
 import { API_BASE_URL } from '../config';
-import AppShell from '../components/AppShell';
 
 export default function MedSchedule() {
   const [prescriptions, setPrescriptions] = useState([]);
@@ -25,11 +24,11 @@ export default function MedSchedule() {
   };
 
   if (loading) {
-    return <AppShell><div className="p-8 text-center">Loading Medication Schedules...</div></AppShell>;
+    return <><div className="p-8 text-center">Loading Medication Schedules...</div></>;
   }
 
   return (
-    <AppShell>
+    <>
       <div className="p-8" style={{ padding: '2rem' }}>
         <h1 className="text-2xl font-bold mb-6" style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Clock /> Medication Schedule
@@ -73,6 +72,6 @@ export default function MedSchedule() {
           </div>
         )}
       </div>
-    </AppShell>
+    </>
   );
 }
