@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { Activity, Moon, User, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -9,10 +9,10 @@ export default function Sidebar({ items, role }) {
   return (
     <aside className="w-64 bg-white/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col h-screen fixed left-0 top-0 overflow-y-auto z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
       <div className="p-6 border-b border-slate-100/50 flex items-center justify-between">
-        <div className="text-xl font-black text-[#0A2540] tracking-tight flex items-center gap-2">
+        <Link to="/" className="text-xl font-black text-[#0A2540] tracking-tight flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
            <Activity className="text-blue-600" />
            CLINIC<span className="text-cyan-500 font-normal">FLOW</span>
-        </div>
+        </Link>
       </div>
 
       <div className="flex-1 py-6 flex flex-col gap-1 px-3">
