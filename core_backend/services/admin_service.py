@@ -53,26 +53,74 @@ class AdminService:
                 }
             }
 
+    
     def get_patient_flow_summary(self):
         with self.Session() as session:
-            today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            total = session.query(func.count(QueueEntry.id)).filter(QueueEntry.created_at >= today).scalar() or 0
-            completed = session.query(func.count(QueueEntry.id)).filter(QueueEntry.status == 'Completed', QueueEntry.created_at >= today).scalar() or 0
-            waiting = session.query(func.count(QueueEntry.id)).filter(QueueEntry.status == 'Waiting', QueueEntry.created_at >= today).scalar() or 0
-            in_consult = session.query(func.count(QueueEntry.id)).filter(QueueEntry.status == 'In Consultation', QueueEntry.created_at >= today).scalar() or 0
-            checked_in = total - waiting - in_consult - completed if (total - waiting - in_consult - completed) > 0 else total
+            today = datetime.now().date()
+            start_today = datetime.combine(today, datetime.min.time())
             
+            # Appointments
+            appointments = session.query(func.count(Appointment.id)).filter(Appointment.created_at >= start_today).scalar() or 0
+            
+            # Check-ins
+            checked_in = session.query(func.count(Appointment.id)).filter(Appointment.check_in_time >= start_today).scalar() or 0
+            
+            # Queue
+            waiting = session.query(func.count(QueueEntry.id)).filter(QueueEntry.status == 'Waiting').scalar() or 0
+            in_consult = session.query(func.count(QueueEntry.id)).filter(QueueEntry.status == 'In Consultation').scalar() or 0
+            completed = session.query(func.count(QueueEntry.id)).filter(QueueEntry.status == 'Completed', QueueEntry.created_at >= start_today).scalar() or 0
+            
+            # Additional Journey stages
+            nurse_prep = session.query(func.count(PatientJourney.id)).filter(PatientJourney.current_stage == 'Nurse', PatientJourney.status == 'In Progress').scalar() or 0
+            doctor = session.query(func.count(PatientJourney.id)).filter(PatientJourney.current_stage == 'Doctor', PatientJourney.status == 'In Progress').scalar() or 0
+            prescribing = session.query(func.count(PatientJourney.id)).filter(PatientJourney.current_stage == 'Prescription', PatientJourney.status == 'In Progress').scalar() or 0
+            medication = session.query(func.count(PatientJourney.id)).filter(PatientJourney.current_stage == 'Medication', PatientJourney.status == 'In Progress').scalar() or 0
+            followup = session.query(func.count(PatientJourney.id)).filter(PatientJourney.current_stage == 'Follow-up', PatientJourney.status == 'In Progress').scalar() or 0
+            
+            avg_wait = session.query(func.avg(QueueEntry.actual_wait_minutes)).filter(QueueEntry.status == 'Completed', QueueEntry.created_at >= start_today).scalar()
+            avg_consult = session.query(func.avg(Consultation.actual_duration_minutes)).filter(Consultation.started_at >= start_today).scalar()
+            
+            hours_elapsed = (datetime.now() - start_today).total_seconds() / 3600.0
+            flow_velocity = completed / hours_elapsed if hours_elapsed > 0 else 0
+            
+            # Wait prediction
+            pred = session.execute(text("SELECT prediction_value FROM predictions WHERE prediction_type = 'waiting_time' ORDER BY created_at DESC LIMIT 1")).mappings().first()
+            predicted_wait = float(pred['prediction_value']) if pred else 0
+            
+            # Alerts
+            alerts = []
+            if avg_wait and avg_wait > 30:
+                alerts.append({"type": "warning", "message": "Queue wait times exceeding 30 minutes.", "timestamp": datetime.now().isoformat()})
+            if waiting > 10:
+                alerts.append({"type": "danger", "message": "Queue accumulation detected (>10).", "timestamp": datetime.now().isoformat()})
+                
             return {
-                "patientsToday": total,
-                "checkedIn": total,
+                "patientsToday": appointments,
+                "checkedIn": checked_in,
                 "currentlyWaiting": waiting,
                 "currentlyConsulting": in_consult,
                 "completed": completed,
-                "stages": [
-                    {"name": "Check-in", "count": total, "avgDuration": "5 min"},
-                    {"name": "Waiting", "count": waiting, "avgDuration": "25 min", "predictedDelay": "5 min"},
-                    {"name": "Consultation", "count": in_consult, "avgDuration": "15 min"},
-                    {"name": "Completed", "count": completed, "avgDuration": "-"}
+                "avgWait": round(float(avg_wait or 0), 1),
+                "predictedWait": round(predicted_wait, 1),
+                "avgConsultation": round(float(avg_consult or 0), 1),
+                "flowVelocity": round(flow_velocity, 1),
+                "alerts": alerts,
+                "pipeline": {
+                    "Appointment": appointments,
+                    "Check-in": checked_in,
+                    "Queue": waiting,
+                    "Nurse": nurse_prep,
+                    "Doctor": doctor,
+                    "Consultation": in_consult,
+                    "Prescription": prescribing,
+                    "Medication": medication,
+                    "Follow-up": followup,
+                    "Completed": completed
+                },
+                "funnel": [
+                    {"stage": "Check-in -> Queue", "avg": "8 min", "pct": 95},
+                    {"stage": "Queue -> Doctor", "avg": f"{round(float(avg_wait or 0), 1)} min", "pct": 80},
+                    {"stage": "Doctor -> Consultation", "avg": "2 min", "pct": 100}
                 ]
             }
 

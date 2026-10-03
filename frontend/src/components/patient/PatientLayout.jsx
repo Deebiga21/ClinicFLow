@@ -11,11 +11,18 @@ import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 
 export default function PatientLayout() {
   const location = useLocation();
-  const patientId = localStorage.getItem('demo_patient_id') || 'P_1';
+  const [patientId, setPatientId] = useState(localStorage.getItem('demo_patient_id') || 'P_1');
   
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const { lastEvent } = useClinicWebSocket();
+
+  const handlePatientChange = (e) => {
+    const newId = e.target.value;
+    localStorage.setItem('demo_patient_id', newId);
+    setPatientId(newId);
+    setLoading(true);
+  };
 
   const fetchData = async () => {
     try {
@@ -34,36 +41,28 @@ export default function PatientLayout() {
 
   const patientItems = [
     {
-      title: 'MY VISIT',
+      title: 'MY CLINIC',
       links: [
         { to: '/patient', end: true, icon: Home, label: 'Home' },
         { to: '/patient/my-visit', icon: Clock, label: 'My Visit' },
-        { to: '/patient/journey', icon: Map, label: 'My Journey' }
-      ]
-    },
-    {
-      title: 'APPOINTMENTS',
-      links: [
+        { to: '/patient/journey', icon: Map, label: 'My Journey' },
         { to: '/patient/appointments', icon: Calendar, label: 'Appointments' }
       ]
     },
     {
-      title: 'MEDICATION & CARE',
+      title: 'MY HEALTH',
       links: [
         { to: '/patient/prescriptions', icon: FileText, label: 'Prescriptions' },
-        { to: '/patient/medications', icon: Pill, label: 'Medications' }
-      ]
-    },
-    {
-      title: 'COMMUNICATION',
-      links: [
-        { to: '/patient/notifications', icon: Bell, label: 'Notifications' }
+        { to: '/patient/medications', icon: Pill, label: 'Medications' },
+        { to: '/patient/follow-up', icon: Calendar, label: 'Follow-up' }
       ]
     },
     {
       title: 'ACCOUNT',
       links: [
-        { to: '/patient/profile', icon: User, label: 'Profile' }
+        { to: '/patient/notifications', icon: Bell, label: 'Notifications' },
+        { to: '/patient/profile', icon: User, label: 'Profile' },
+        { to: '/patient/settings', icon: User, label: 'Settings' }
       ]
     }
   ];
@@ -87,7 +86,22 @@ export default function PatientLayout() {
       <Sidebar items={patientItems} role="patient" />
       <div className="flex-1 ml-64 flex flex-col min-h-screen relative">
         <Header title={currentMeta.title} subtitle={currentMeta.sub} role="patient" />
-        <main className="flex-1 p-6 overflow-x-hidden">
+        <div className="flex justify-end px-6 pt-4">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm text-sm font-medium">
+            <span className="text-slate-500">Viewing as:</span>
+            <select 
+              value={patientId}
+              onChange={handlePatientChange}
+              className="bg-transparent border-none outline-none font-bold text-[#0A2540] cursor-pointer"
+            >
+              <option value="P_1">Patient P_1 (A-24)</option>
+              <option value="P_2">Patient P_2 (A-25)</option>
+              <option value="P_3">Patient P_3 (A-26)</option>
+              <option value="P_4">Patient P_4</option>
+            </select>
+          </div>
+        </div>
+        <main className="flex-1 p-6 overflow-x-hidden pt-4">
           <Outlet context={{ patientId, data, loading, fetchData }} />
         </main>
       </div>
