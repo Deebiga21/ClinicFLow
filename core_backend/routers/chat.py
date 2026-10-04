@@ -29,8 +29,8 @@ class BotQueryRequest(BaseModel):
 async def broadcast_chat_message(msg):
     try:
         from main import sio, manager
-        await sio.emit('chat_message', msg)
-        await manager.broadcast({'type': 'chat_message', 'data': msg})
+        await sio.emit('chat_message_created', msg)
+        await manager.broadcast({'type': 'chat_message_created', 'data': msg})
     except ImportError:
         pass
 
