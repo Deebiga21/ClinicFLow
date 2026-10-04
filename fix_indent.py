@@ -1,22 +1,7 @@
-import re
-
-with open(r'd:\clinic-queue -updated\core_backend\services\admin_service.py', 'r', encoding='utf-8') as f:
+with open(r"d:\ClinicFLow\core_backend\services\patient_service.py", "r") as f:
     content = f.read()
 
-# Fix indent
-content = content.replace("            return {", "            return {") # no wait, maybe it was 12 spaces, wait... let me just use textwrap.dedent and properly indent
+content = content.replace("if not today:\n                \n            bill = session", "if not today:\n                return {}\n\n            bill = session")
 
-def fix_indent(text):
-    lines = text.split('\n')
-    fixed = []
-    for line in lines:
-        if line.startswith('return {'):
-            fixed.append('            return {')
-        elif line.startswith('"patients_today"'):
-            fixed.append('                "patients_today": patients_today,')
-        else:
-            fixed.append(line)
-    return '\n'.join(fixed)
-
-with open(r'd:\clinic-queue -updated\core_backend\services\admin_service.py', 'w', encoding='utf-8') as f:
+with open(r"d:\ClinicFLow\core_backend\services\patient_service.py", "w") as f:
     f.write(content)

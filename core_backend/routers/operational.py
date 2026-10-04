@@ -42,3 +42,67 @@ def get_medicines():
 @router.get("/api/medicines/demand")
 def get_medicines_demand():
     return {"status": "NOT_TRAINED", "reason": "Medicine demand model not implemented"}
+
+import uuid
+from pydantic import BaseModel
+
+class CallNextReq(BaseModel):
+    doctorId: str
+    queueId: str
+
+@router.get("/api/operational/queue")
+def get_live_queue():
+    from services.orchestration import orchestrator
+    with orchestrator.Session() as session:
+        # Get active queue items
+        query = """
+            SELECT q.id, q.patient_id, p.name as patient_name, q.doctor_id, d.name as doctor_name, 
+                   q.status, a.token_status, q.queue_position 
+            FROM queue_entries q
+            JOIN patients p ON q.patient_id = p.id
+            JOIN doctors d ON q.doctor_id = d.id
+            JOIN appointments a ON q.appointment_id = a.id
+            WHERE q.status NOT IN ('Completed', 'Cancelled')
+            ORDER BY q.queue_position ASC
+        """
+        rows = session.execute(text(query)).mappings().all()
+        
+        res = []
+        for r in rows:
+            # simple mock wait time for the view based on pos
+            res.append({
+                "id": r["id"],
+                "token": r["token_status"] if r["token_status"] and r["token_status"] != 'Pending' else f"A-{r['queue_position']}",
+                "patient_name": r["patient_name"],
+                "doctor_id": r["doctor_id"],
+                "doctor_name": r["doctor_name"],
+                "status": r["status"],
+                "predicted_wait": r["queue_position"] * 10
+            })
+        return {"queue": res}
+
+@router.post("/api/operational/call-next")
+def call_next_patient(req: CallNextReq):
+    from services.orchestration import orchestrator
+    with orchestrator.Session() as session:
+        # End current
+        session.execute(text("UPDATE queue_entries SET status = 'Completed', consultation_completed_at = CURRENT_TIMESTAMP WHERE doctor_id = :did AND status = 'In Consultation'"), {'did': req.doctorId})
+        
+        # Call this specific queue ID
+        session.execute(text("UPDATE queue_entries SET status = 'In Consultation', consultation_started_at = CURRENT_TIMESTAMP WHERE id = :qid"), {'qid': req.queueId})
+        
+        # Find the appointment_id to update patient journey
+        q_row = session.execute(text("SELECT patient_id, appointment_id FROM queue_entries WHERE id = :qid"), {'qid': req.queueId}).mappings().first()
+        if q_row:
+            session.execute(text('''
+                UPDATE patient_journeys SET previous_stage = current_stage, current_stage = 'Consultation', stage_started_at = CURRENT_TIMESTAMP 
+                WHERE patient_id = :pat AND appointment_id = :app
+            '''), {'pat': q_row['patient_id'], 'app': q_row['appointment_id']})
+            
+            session.commit()
+            
+            orchestrator._broadcast("queue_updated", {})
+            orchestrator._broadcast("patient_called", {"patient_id": q_row['patient_id']})
+            orchestrator._broadcast("patient_journey_updated", {"patient_id": q_row['patient_id'], "stage": "Consultation"})
+            
+        return {"status": "success"}

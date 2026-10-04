@@ -16,6 +16,17 @@ class User(Base):
     patient_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+
+class Bill(Base):
+    __tablename__ = 'bills'
+    id = Column(String, primary_key=True)
+    patient_id = Column(String, ForeignKey('patients.id'))
+    appointment_id = Column(String, ForeignKey('appointments.id'))
+    consultation_id = Column(String, nullable=True)
+    amount = Column(Float)
+    status = Column(String, default="Pending")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 class Payment(Base):
     __tablename__ = 'payments'
     id = Column(String, primary_key=True)
@@ -25,6 +36,8 @@ class Payment(Base):
     status = Column(String)
     payment_method = Column(String)
     transaction_ref = Column(String)
+    bill_id = Column(String, nullable=True)
+    receipt_generated = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 class Patient(Base):

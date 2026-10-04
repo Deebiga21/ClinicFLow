@@ -16,6 +16,13 @@ class PatientService:
             if not today:
                 return {}
 
+            bill = session.execute(text(
+                "SELECT * FROM bills WHERE appointment_id = :appointment_id ORDER BY created_at DESC LIMIT 1"
+            ), {"appointment_id": appointment_id}).mappings().first()
+            
+            return {
+}
+
             appointment_id = today['id']
             queue_status = session.execute(text(
                 "SELECT * FROM queue_entries WHERE appointment_id = :appointment_id"
@@ -33,7 +40,8 @@ class PatientService:
                 "appointment": dict(today),
                 "queue_status": dict(queue_status) if queue_status else None,
                 "waiting_prediction": dict(waiting_prediction) if waiting_prediction else None,
-                "readiness": dict(readiness) if readiness else None
+                "readiness": dict(readiness) if readiness else None,
+                "bill": dict(bill) if bill else None
             }
 
     def get_patient_journey(self, patient_id: str):

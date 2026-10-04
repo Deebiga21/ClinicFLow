@@ -20,6 +20,17 @@ export default function PatientLayout() {
   const [loading, setLoading] = useState(true);
   const { lastEvent } = useClinicWebSocket();
 
+  // Watch for "patient_called" event
+  const [toast, setToast] = useState(null);
+  
+  useEffect(() => {
+    if (lastEvent?.event === 'patient_called' && lastEvent?.data?.patient_id === patientId) {
+      setToast("Your turn — The doctor is ready for your consultation.");
+      setTimeout(() => setToast(null), 10000);
+    }
+  }, [lastEvent, patientId]);
+
+
   const handlePatientChange = (e) => {
     const newId = e.target.value;
     localStorage.setItem('demo_patient_id', newId);
@@ -103,7 +114,14 @@ export default function PatientLayout() {
             </select>
           </div>
         </div>
+        
+        {toast && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce font-bold">
+            {toast}
+          </div>
+        )}
         <main className="flex-1 overflow-y-auto">
+
           <Outlet context={{ data, loading }} />
         </main>
         <BookingWizard isOpen={bookingOpen} onClose={() => setBookingOpen(false)} patientId={data?.patient?.id || patientId} />
