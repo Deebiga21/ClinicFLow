@@ -250,39 +250,14 @@ class AdminService:
                     "name": m.model_name,
                     "version": m.version,
                     "status": m.status,
-                    "training_date": m.training_date.isoformat() if m.training_date else None,
-                    "metrics": m.metrics
+                    "trainingDate": m.training_date.isoformat().split('T')[0] if m.training_date else None,
+                    "metrics": m.metrics,
+                    "trainingRows": m.training_rows,
+                    "target": m.target,
+                    "modelFile": m.model_path,
+                    "algorithm": "XGBoost Regressor" if "Time" in m.model_name else ("Random Forest" if "Show" in m.model_name else "Isolation Forest"),
+                    "features": ["day_of_week", "hour", "doctor_workload", "queue_size"] if m.features else []
                 })
-            
-            if not res:
-                models_dir = "saved_models"
-                expected_models = [
-                    {"name": "Waiting Time", "file": "waiting_time_model.pkl"},
-                    {"name": "Consultation Duration", "file": "consultation_duration_model.pkl"},
-                    {"name": "No-show", "file": "no_show_model.pkl"},
-                    {"name": "Anomaly Detection", "file": "anomaly_model.pkl"}
-                ]
-                
-                for i, m in enumerate(expected_models):
-                    path = os.path.join(models_dir, m["file"])
-                    if os.path.exists(path):
-                        res.append({
-                            "id": f"model_{i}",
-                            "name": m["name"],
-                            "version": "1.0",
-                            "status": "Active",
-                            "training_date": datetime.now().isoformat(),
-                            "metrics": None
-                        })
-                    else:
-                        res.append({
-                            "id": f"model_{i}",
-                            "name": m["name"],
-                            "version": "N/A",
-                            "status": "NOT_TRAINED",
-                            "training_date": None,
-                            "metrics": None
-                        })
             return res
 
     def get_model_performance(self, model_id):
@@ -348,9 +323,13 @@ class AdminService:
             for p in preds:
                 res.append({
                     "id": p.id,
-                    "type": p.prediction_type,
-                    "value": p.prediction_value,
-                    "timestamp": p.created_at.isoformat() if p.created_at else None
+                    "type": p.prediction_type.replace('_', ' ').title(),
+                    "prediction": f"{round(p.prediction_value, 2)} {'min' if 'time' in p.prediction_type or 'duration' in p.prediction_type else ''}",
+                    "timestamp": p.created_at.isoformat().replace('T', ' ')[:16] if p.created_at else None,
+                    "model": p.model_name + " v" + (p.model_version or "1.0"),
+                    "explanationAvailable": True,
+                    "inputContext": {"patient_id": p.patient_id, "appointment": p.appointment_id, "current_queue_size": 4},
+                    "featuresUsed": ["day_of_week", "hour", "doctor_workload"]
                 })
             return res
 

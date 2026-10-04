@@ -15,9 +15,10 @@ export default function AdminMLModels() {
   const fetchData = async () => {
     try {
       const res = await api.get('/admin/ml-models').catch(() => []);
-      setModels(res.data || []);
-      if (res.data?.length > 0 && !selectedModel) {
-        setSelectedModel(res.data[0]);
+      const data = Array.isArray(res) ? res : (res.data || []);
+      setModels(data);
+      if (data.length > 0 && !selectedModel) {
+        setSelectedModel(data[0]);
       }
     } catch (error) {
       console.error(error);

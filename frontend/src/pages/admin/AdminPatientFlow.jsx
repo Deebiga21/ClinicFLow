@@ -24,16 +24,17 @@ export default function AdminPatientFlow() {
   const fetchData = async () => {
     try {
       const [flowDataRes, chartRes, queueRes, docRes] = await Promise.all([
-        api.get('/admin/patient-flow/summary').catch(() => ({ data: {} })),
-        api.get('/admin/patient-flow/chart').catch(() => ({ data: [] })),
-        api.get('/admin/patient-flow/live-queue').catch(() => ({ data: [] })),
-        api.get('/admin/patient-flow/doctor-flow').catch(() => ({ data: [] }))
+        api.get('/admin/patient-flow/summary').catch(() => ({})),
+        api.get('/admin/patient-flow/chart').catch(() => []),
+        api.get('/admin/patient-flow/live-queue').catch(() => []),
+        api.get('/admin/patient-flow/doctor-flow').catch(() => [])
       ]);
       
-      setData(flowDataRes.data || {});
-      setChartData(chartRes.data || []);
-      setLiveQueue(queueRes.data || []);
-      setDoctors(docRes.data || []);
+      // Because api.get strips the {data: ...} wrapper, the responses are the actual data
+      setData(flowDataRes.data !== undefined ? flowDataRes.data : flowDataRes);
+      setChartData(chartRes.data !== undefined ? chartRes.data : (Array.isArray(chartRes) ? chartRes : []));
+      setLiveQueue(queueRes.data !== undefined ? queueRes.data : (Array.isArray(queueRes) ? queueRes : []));
+      setDoctors(docRes.data !== undefined ? docRes.data : (Array.isArray(docRes) ? docRes : []));
     } catch (err) {
       console.error(err);
     } finally {

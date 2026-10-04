@@ -21,7 +21,11 @@ export default function AdminPredictions() {
   const fetchData = async () => {
     try {
       const res = await api.get('/admin/predictions').catch(() => []);
-      setPredictions(res.data || []);
+      const data = Array.isArray(res) ? res : (res.data || []);
+      setPredictions(data);
+      if (data.length > 0 && !selectedPrediction) {
+        setSelectedPrediction(data[0]);
+      }
     } catch (error) {
       console.error(error);
     } finally {
