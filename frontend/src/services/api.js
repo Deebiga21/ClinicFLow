@@ -38,7 +38,8 @@ async function fetchWithHandler(url, options = {}) {
 
 export const api = {
   // Generic fallback for subagents that used api.get('/path')
-  get: (url) => fetchWithHandler(url),
+  get: (url, options) => fetchWithHandler(url, options),
+  post: (url, data, options = {}) => fetchWithHandler(url, { method: 'POST', body: JSON.stringify(data), ...options }),
 
   // Admin Dashboard
   getDashboardOverview: () => fetchWithHandler('/admin/dashboard'),

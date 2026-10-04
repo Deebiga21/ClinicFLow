@@ -1,56 +1,69 @@
 import { useEffect, useState, useCallback } from 'react';
-import { API_BASE } from '../config';
-import { getSocket } from './useQueueSocket';
+import { api } from '../services/api';
+import { useClinicWebSocket } from './useClinicWebSocket';
 import { useAuth } from '../context/AuthContext';
-import { playMessageBlip } from '../utils/sound';
+// import { playMessageBlip } from '../utils/sound'; // Keep commented if sound missing
 
-export function useChat(tokenNumber) {
-  const { token, user } = useAuth() || {};
+export function useChat(channelId) {
+  const { user } = useAuth() || {};
   const [messages, setMessages] = useState([]);
+  const { lastEvent } = useClinicWebSocket();
 
   useEffect(() => {
-    if (!tokenNumber) {
+    if (!channelId) {
       setMessages([]);
       return;
     }
 
     let alive = true;
-    fetch(`${API_BASE}/chat/${tokenNumber}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json())
-      .then(d => { if (alive) setMessages(d.messages || []); })
-      .catch(() => {});
+    // Fetch historical messages for the channel
+    api.get(`/chat/channels/${channelId}/messages`)
+      .then(res => {
+        const data = Array.isArray(res) ? res : (res.data || []);
+        if (alive) setMessages(data);
+      })
+      .catch(console.error);
 
-    const socket = getSocket(token);
-    socket.emit('chat:join', { tokenNumber: Number(tokenNumber) });
+    return () => { alive = false; };
+  }, [channelId]);
 
-    const onMsg = (m) => {
-      if (Number(m.tokenNumber) === Number(tokenNumber)) {
-        if (m.senderRole !== user?.role) playMessageBlip();
-        setMessages(prev => {
-          if (prev.some(existing => existing._id === m._id && m._id)) return prev;
-          return [...prev, m];
+  // Listen for websocket chat events
+  useEffect(() => {
+    if (lastEvent?.type === 'chat_message' && lastEvent.data?.channel === channelId) {
+      const msg = lastEvent.data;
+      setMessages(prev => {
+        if (prev.some(existing => existing.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
+    }
+  }, [lastEvent, channelId]);
+
+  const send = useCallback(async (text, messageType = "text") => {
+    if (!text || !text.trim() || !channelId) return;
+    
+    const senderRole = user?.role || 'nurse';
+    const senderId = user?.username || 'Nurse_1'; // fallback
+    
+    try {
+      if (channelId === 'bot') {
+        await api.post('/chat/bot/query', {
+          sender_id: senderId,
+          sender_role: senderRole,
+          message: text
+        });
+      } else {
+        await api.post(`/chat/messages`, {
+          sender_id: senderId,
+          sender_role: senderRole,
+          channel: channelId,
+          message: text,
+          message_type: messageType
         });
       }
-    };
-
-    socket.on('chat:message', onMsg);
-    socket.on('chat:new_message', onMsg);
-
-    return () => {
-      alive = false;
-      socket.emit('chat:leave', { tokenNumber: Number(tokenNumber) });
-      socket.off('chat:message', onMsg);
-      socket.off('chat:new_message', onMsg);
-    };
-  }, [tokenNumber, token, user?.role]);
-
-  const send = useCallback((text) => {
-    if (!text || !text.trim() || !tokenNumber || !user) return;
-    const socket = getSocket(token);
-    socket.emit('chat:send', {
-      tokenNumber, text, senderRole: user.role, senderName: user.displayName || user.username
-    });
-  }, [tokenNumber, user, token]);
+    } catch (e) {
+      console.error("Failed to send message", e);
+    }
+  }, [channelId, user]);
 
   return { messages, send };
 }

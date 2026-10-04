@@ -4,6 +4,7 @@ import {
   Users, Activity, ClipboardList, Clock, 
   AlertTriangle, PhoneCall, Pill, ShieldAlert 
 } from 'lucide-react';
+import ChatPanel from '../components/ChatPanel';
 
 export default function NurseDashboard() {
   const [data, setData] = useState(null);
@@ -208,6 +209,17 @@ export default function NurseDashboard() {
 
         </div>
       </div>
+
+      {/* Communications & AI Agent */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
+        <div style={{ height: '400px', background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>
+          <ChatPanel channelId="clinic_operations" />
+        </div>
+        <div style={{ height: '400px', background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>
+          <ChatPanel channelId="bot" />
+        </div>
+      </div>
+
     </div>
   );
 }

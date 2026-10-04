@@ -8,6 +8,7 @@ import {
 import ChartCard from '../../components/shared/ChartCard';
 import StatusBadge from '../../components/shared/StatusBadge';
 import LoadingState from '../../components/shared/LoadingState';
+import ChatPanel from '../../components/ChatPanel';
 
 export default function AdminCommandCenter() {
   const [data, setData] = useState(null);
@@ -256,6 +257,16 @@ export default function AdminCommandCenter() {
             })}
          </div>
       </ChartCard>
+
+      {/* Communications & AI Agent */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <div className="h-[500px]">
+          <ChatPanel channelId="clinic_operations" />
+        </div>
+        <div className="h-[500px]">
+          <ChatPanel channelId="bot" />
+        </div>
+      </div>
 
     </div>
   );
