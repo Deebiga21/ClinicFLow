@@ -29,16 +29,14 @@ class PatientService:
                 "SELECT * FROM patient_readiness WHERE appointment_id = :appointment_id"
             ), {"appointment_id": appointment_id}).mappings().first()
 
-            bill = session.execute(text(
-                "SELECT * FROM bills WHERE appointment_id = :appointment_id ORDER BY created_at DESC LIMIT 1"
-            ), {"appointment_id": appointment_id}).mappings().first()
+            
 
             return {
                 "appointment": dict(today),
                 "queue_status": dict(queue_status) if queue_status else None,
                 "waiting_prediction": dict(waiting_prediction) if waiting_prediction else None,
                 "readiness": dict(readiness) if readiness else None,
-                "bill": dict(bill) if bill else None
+                
             }
 
     def get_patient_journey(self, patient_id: str):

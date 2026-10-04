@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, User, CheckCircle, FileText, CreditCard, QrCode } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { X, Calendar, User, CheckCircle, FileText,  } from 'lucide-react';
 
 // API helper
 const API_BASE = 'http://localhost:8000/api';
@@ -71,37 +70,7 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
     }
   };
 
-  const handlePayment = async () => {
-    setLoading(true);
-    try {
-      // 1. Create Payment
-      const pRes = await fetch(`${API_BASE}/payments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          appointment_id: appointmentDetails.id,
-          patient_id: patientId || 'P_1234',
-          amount: 500
-        })
-      });
-      const pData = await pRes.json();
-      
-      // 2. Verify Payment (simulated Sandbox success)
-      const vRes = await fetch(`${API_BASE}/payments/${pData.payment_id}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const vData = await vRes.json();
-      
-      setAppointmentDetails({ ...appointmentDetails, token: vData.token, status: 'Confirmed' });
-      setStep(5); // Go to Final Receipt & Token
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  
   if (!isOpen) return null;
 
   return (
@@ -234,56 +203,23 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
                 <p className="font-bold mb-2">Instructions:</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Please arrive 15 minutes before the appointment time.</li>
-                  <li>Keep the appointment QR code ready for check-in.</li>
+                  
                   <li>Carry any previous reports or referral documents.</li>
                 </ul>
               </div>
             </div>
           )}
 
-          {step === 4 && (
-            <div className="max-w-md mx-auto bg-white p-8 rounded-xl border border-gray-200 shadow-sm text-center">
-              <CreditCard size={48} className="mx-auto text-blue-500 mb-4" />
-              <h3 className="text-xl font-bold text-[#0A2540] mb-2">Appointment Payment</h3>
-              <p className="text-gray-500 mb-6">Complete payment to generate your token.</p>
-              
-              <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Consultation Fee</span>
-                  <span className="font-bold">₹500.00</span>
-                </div>
-                <div className="flex justify-between border-t pt-2 mt-2">
-                  <span className="font-bold text-[#0A2540]">Total Amount</span>
-                  <span className="font-black text-blue-600">₹500.00</span>
-                </div>
-              </div>
-              
-              <button 
-                onClick={handlePayment} 
-                disabled={loading}
-                className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                {loading ? 'Processing...' : 'PAY NOW (Sandbox)'}
-              </button>
-            </div>
-          )}
+          
 
-          {step === 5 && appointmentDetails?.token && (
+          {step === 4 && appointmentDetails?.token && (
             <div className="max-w-md mx-auto text-center">
-              <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 font-bold flex items-center justify-center gap-2">
-                <CheckCircle size={20} /> Payment Successful
-              </div>
-              
               <div className="bg-white p-8 rounded-xl border-2 border-blue-100 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10"></div>
                 <p className="text-xs font-bold text-blue-600 tracking-widest uppercase mb-2">YOUR TOKEN</p>
                 <h1 className="text-6xl font-black text-[#0A2540] mb-6">{appointmentDetails.token}</h1>
                 
-                <div className="flex justify-center mb-6">
-                  <QRCodeSVG value={JSON.stringify({ action: "check_in", appointment_id: appointmentDetails.id })} size={120} />
-                </div>
-                
-                <p className="text-sm text-gray-500 mb-2">Scan this QR at the reception kiosk to check-in.</p>
+                <p className="text-sm text-gray-500 mb-2">Please watch the live queue monitor for your token to be called.</p>
                 
                 <button 
                   onClick={() => {
@@ -310,7 +246,7 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
         )}
         {step === 3 && (
           <div className="px-6 py-4 border-t border-gray-100 bg-white flex justify-end gap-3">
-            <button onClick={() => setStep(4)} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg">Proceed to Payment</button>
+            <button onClick={() => setStep(4)} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg">View Token</button>
           </div>
         )}
       </div>
