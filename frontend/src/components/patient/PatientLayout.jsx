@@ -9,8 +9,11 @@ import GlobalBackground from '../shared/GlobalBackground';
 import { api } from '../../services/api';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 
+import BookingWizard from '../../pages/patient/BookingWizard';
+
 export default function PatientLayout() {
   const location = useLocation();
+  const [bookingOpen, setBookingOpen] = React.useState(false);
   const [patientId, setPatientId] = useState(localStorage.getItem('demo_patient_id') || 'P_1');
   
   const [data, setData] = useState(null);
@@ -39,46 +42,34 @@ export default function PatientLayout() {
     fetchData();
   }, [patientId, lastEvent]);
 
+  
   const patientItems = [
     {
-      title: 'MY CLINIC',
+      title: 'DASHBOARD',
       links: [
-        { to: '/patient', end: true, icon: Home, label: 'Home' },
-        { to: '/patient/my-visit', icon: Clock, label: 'My Visit' },
-        { to: '/patient/journey', icon: Map, label: 'My Journey' },
-        { to: '/patient/appointments', icon: Calendar, label: 'Appointments' }
+        { to: '/patient', end: true, icon: Home, label: 'HOME' },
+        { to: '/patient/appointments', icon: Calendar, label: 'MY APPOINTMENTS' },
+        { to: '#', onClick: () => setBookingOpen(true), icon: Calendar, label: 'BOOK APPOINTMENT' },
+        { to: '/patient/my-visit', icon: Clock, label: 'MY TOKEN' },
+        { to: '/patient/journey', icon: Map, label: 'MY JOURNEY' }
       ]
     },
     {
-      title: 'MY HEALTH',
+      title: 'RECORDS',
       links: [
-        { to: '/patient/prescriptions', icon: FileText, label: 'Prescriptions' },
-        { to: '/patient/medications', icon: Pill, label: 'Medications' },
-        { to: '/patient/follow-up', icon: Calendar, label: 'Follow-up' }
+        { to: '/patient/prescriptions', icon: FileText, label: 'PRESCRIPTIONS' },
+        { to: '/patient/medications', icon: Pill, label: 'MEDICATIONS' },
       ]
     },
     {
       title: 'ACCOUNT',
       links: [
-        { to: '/patient/notifications', icon: Bell, label: 'Notifications' },
-        { to: '/patient/profile', icon: User, label: 'Profile' },
-        { to: '/patient/settings', icon: User, label: 'Settings' }
+        { to: '/patient/notifications', icon: Bell, label: 'NOTIFICATIONS' },
+        { to: '/patient/profile', icon: User, label: 'PROFILE' }
       ]
     }
   ];
 
-  const routeNameMap = {
-    '/patient': { title: data?.patient?.name ? `Good morning, ${data.patient.name.split(' ')[0]}` : 'Good morning', sub: 'Here is your clinic visit at a glance' },
-    '/patient/my-visit': { title: 'My Visit', sub: 'Current waiting status' },
-    '/patient/journey': { title: 'My Care Journey', sub: 'Your complete step-by-step progress' },
-    '/patient/appointments': { title: 'Appointments', sub: 'Manage your upcoming visits' },
-    '/patient/prescriptions': { title: 'My Prescriptions', sub: 'Approved clinician prescriptions' },
-    '/patient/medications': { title: 'My Medication Schedule', sub: 'Your active medicine plan' },
-    '/patient/notifications': { title: 'Notifications', sub: 'Important updates for your care' },
-    '/patient/profile': { title: 'Profile', sub: 'Your details and preferences' },
-  };
-
-  const currentMeta = routeNameMap[location.pathname] || routeNameMap['/patient'];
 
   return (
     <div className="min-h-screen flex font-sans text-slate-800">

@@ -50,7 +50,7 @@ import PatientProfile from './pages/patient/PatientProfile';
 function RoleRedirect() {
   const { user } = useAuth();
   if (!user) return <Landing />;
-  if (user.role === 'admin' || user.role === 'staff') return <Navigate to="/nurse" replace />;
+  if (user.role === 'admin' || user.role === 'staff' || user.role === 'nurse') return <Navigate to="/nurse" replace />;
   return <Navigate to="/patient" replace />;
 }
 

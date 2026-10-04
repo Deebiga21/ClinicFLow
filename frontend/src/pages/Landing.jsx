@@ -198,8 +198,8 @@ export default function Landing() {
               Predict the flow. Transform real-time clinic operations into predictive intelligence.
             </p>
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '40px' }}>
-              <Link to="/patient" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#0284c7', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)', border: '2px solid #0284c7' }}>
-                Patient Dashboard
+              <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#0284c7', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)', border: '2px solid #0284c7' }}>
+                Patient Login
               </Link>
               <Link to="/nurse" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0284c7', color: '#fff', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(2, 132, 199, 0.4)' }}>
                 Nurse Dashboard <ArrowRight size={20} />
