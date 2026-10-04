@@ -58,27 +58,35 @@ class PatientService:
             ), {"patient_id": patient_id}).mappings().first()
 
             if not today:
-                return {"explanation": "No wait time prediction available."}
+                return {"explanation": "Explanation currently unavailable.", "factors": []}
 
             queue_entry = session.execute(text(
                 "SELECT id, queue_position FROM queue_entries WHERE appointment_id = :appointment_id"
             ), {"appointment_id": today['id']}).mappings().first()
 
             if not queue_entry:
-                return {"explanation": "You are not currently in the queue."}
+                return {"explanation": "Explanation currently unavailable.", "factors": []}
 
             from services.ml_service import MLService
             ml = MLService()
             ml_pred = ml.get_waiting_time_prediction(queue_entry['id'])
             
-            explanation = "Based on clinic workload and patient complexity."
-            if "shap" in ml_pred and "natural_explanation" in ml_pred["shap"]:
-                explanation = ml_pred["shap"]["natural_explanation"]
+            if ml_pred.get("status") == "SUCCESS" and ml_pred.get("shap"):
+                shap_data = ml_pred.get("shap")
+                factors = []
+                for k, v in shap_data.items():
+                    factors.append({"label": k.replace("_", " ").title(), "impact": f"{v:+.2f}"})
+                
+                # Sort by absolute impact descending
+                factors.sort(key=lambda x: abs(float(x["impact"])), reverse=True)
+                
+                return {
+                    "explanation": "Based on real-time clinic workload models.",
+                    "factors": factors,
+                    "estimated_wait": ml_pred.get("predicted_waiting_time")
+                }
             
-            return {
-                "predicted_wait": ml_pred.get("predicted_waiting_time"),
-                "explanation": explanation
-            }
+            return {"explanation": "Explanation currently unavailable.", "factors": []}
 
     def get_patient_medications(self, patient_id: str):
         with self.Session() as session:

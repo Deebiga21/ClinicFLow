@@ -1,237 +1,339 @@
-import React from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
-import ChartCard from '../../components/shared/ChartCard';
-import StatusBadge from '../../components/shared/StatusBadge';
-import { User, Clock, CheckCircle, Navigation, Users, RefreshCw, Pill, ArrowRight, Activity, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { 
+  User, Clock, CheckCircle2, QrCode, 
+  MapPin, Calendar, Pill, Navigation, AlertCircle, ChevronRight
+} from 'lucide-react';
+import { api } from '../../services/api';
 
 export default function PatientHome() {
   const { data, loading } = useOutletContext();
-  const navigate = useNavigate();
+  const [waitExplanation, setWaitExplanation] = useState(null);
+
+  useEffect(() => {
+    if (data?.patient?.id) {
+      api.get(`/patient/${data.patient.id}/wait-explanation`)
+         .then(res => setWaitExplanation(res))
+         .catch(err => console.error("Could not fetch wait explanation", err));
+    }
+  }, [data?.patient?.id, data?.queue_status]);
 
   if (loading || !data) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 text-slate-500">
-        <RefreshCw size={32} className="animate-spin mb-4 text-sky-500" />
-        <p className="font-semibold text-sm tracking-wide">Loading your visit details...</p>
-      </div>
-    );
+    return <div className="flex h-screen items-center justify-center bg-[#f8fafc]"><div className="animate-spin h-8 w-8 border-4 border-indigo-500 rounded-full border-t-transparent"></div></div>;
   }
 
-  const patient = data.patient || {};
-  const appointment = data.today_appointment || {};
-  const queueStatus = data.queue_status || {};
-  const medications = data.medication_summary || [];
-  const journey = data.journey || [];
+  const { 
+    patient = {}, 
+    today_appointment = {}, 
+    queue_status = {}, 
+    waiting_prediction = {}, 
+    journey = [], 
+    medication_summary = []
+  } = data;
   
-  const hasAppt = !!appointment.id;
+  const hasAppt = !!today_appointment.id;
+  const tokenNumber = queue_status.queue_position ? `A-${queue_status.queue_position}` : 'N/A';
+  const status = queue_status.status || 'Scheduled';
+  const patientsAhead = queue_status.queue_position ? Math.max(0, queue_status.queue_position - 1) : 0;
+  const waitTime = waiting_prediction.prediction_value ? Math.round(waiting_prediction.prediction_value) : '--';
   
-  // LIVE QUEUE data
-  const token = queueStatus.token_number || '--';
-  const status = queueStatus.status || 'No active queue';
-  const ahead = queueStatus.patients_ahead ?? '--';
-  const currentlyServing = queueStatus.currently_serving || '--';
-  const nextToken = queueStatus.next_expected_token || '--';
-  const waitMin = data.waiting_prediction ? Math.round(data.waiting_prediction.predicted_wait_minutes) : '--';
-  const badgeStatus = status === 'Waiting' ? 'warning' : status === 'In Consultation' ? 'success' : 'default';
+  // Calculate Journey Progress
+  const journeyTotal = 6;
+  const journeyCompleted = journey.filter(j => j.stage_completed_at).length;
+  const journeyPercent = Math.min(100, Math.round((journeyCompleted / journeyTotal) * 100)) || 10;
 
-  // MEDICATION SUMMARY data (today's schedules)
-  const todaySchedules = [];
-  medications.forEach(med => {
-    (med.schedules || []).forEach(sched => {
-      todaySchedules.push({
-        medicine: med.medicine_name,
-        time: sched.scheduled_time,
-        status: sched.status
-      });
+  // Flatten medications
+  const allSchedules = [];
+  medication_summary.forEach(rx => {
+    rx.schedules.forEach(s => {
+      allSchedules.push({ ...s, medicine_name: rx.medicine_name, dosage: rx.dosage });
     });
   });
 
   return (
-    <div className="flex flex-col gap-6 max-w-[1000px] mx-auto pb-12">
+    <div className="font-sans space-y-6">
       
-      {!hasAppt && (
-        <div className="bg-slate-50 border border-slate-200 p-8 rounded-2xl text-center">
-          <Calendar className="mx-auto text-slate-400 mb-4" size={48} />
-          <h2 className="text-xl font-bold text-slate-700">No appointments today</h2>
-          <p className="text-slate-500 mt-2">You don't have any active visits scheduled for today.</p>
-        </div>
-      )}
+      {/* Welcome Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-[#0A2540] mb-1">Good Morning, {patient.name || 'Patient'}</h2>
+        <p className="text-sm text-gray-500">Here is your clinic visit status for today.</p>
+      </div>
 
-      {hasAppt && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* LEFT/MAIN COLUMN */}
+        <div className="lg:col-span-2 space-y-6">
           
-          {/* TODAY'S VISIT RECEIPT */}
-          <ChartCard title="TODAY'S VISIT" subtitle="Your appointment details">
-            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-2xl p-6 border border-blue-100 shadow-sm relative overflow-hidden mt-4">
-              <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl"></div>
-              
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Patient Name</div>
-                  <div className="font-black text-[#0A2540] text-xl">{patient.name || 'Unknown'}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Token</div>
-                  <div className="font-black text-blue-600 text-2xl">{token}</div>
-                </div>
+          {/* Today's Visit & Live Queue (Split layout) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Today's Visit Details */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[320px]">
+              <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 className="font-semibold text-[#0A2540] flex items-center gap-2">
+                  <Calendar size={18} className="text-blue-500" /> Today's Visit
+                </h3>
+                <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline">View Details</span>
               </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between border-b border-dashed border-blue-100 pb-3">
-                  <span className="text-sm text-slate-500">Date & Time</span>
-                  <span className="text-sm font-bold text-slate-700">{appointment.appointment_date} at {appointment.appointment_time}</span>
-                </div>
-                <div className="flex justify-between border-b border-dashed border-blue-100 pb-3">
-                  <span className="text-sm text-slate-500">Doctor</span>
-                  <span className="text-sm font-bold text-slate-700">Dr. {appointment.doctor_id}</span>
-                </div>
-                <div className="flex justify-between border-b border-dashed border-blue-100 pb-3">
-                  <span className="text-sm text-slate-500">Reason</span>
-                  <span className="text-sm font-bold text-slate-700">{appointment.appointment_type || 'General'}</span>
-                </div>
-                <div className="flex justify-between pb-1">
-                  <span className="text-sm text-slate-500">Current Status</span>
-                  <StatusBadge status={badgeStatus} text={status.toUpperCase()} />
-                </div>
-              </div>
-
-              <button 
-                onClick={() => navigate('/patient/my-visit')}
-                className="w-full mt-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition-colors"
-              >
-                VIEW FULL DETAILS
-              </button>
-            </div>
-          </ChartCard>
-
-          {/* LIVE QUEUE STATUS */}
-          <ChartCard title="LIVE QUEUE STATUS" subtitle="Real-time clinic flow">
-            <div className="flex flex-col gap-4 mt-4">
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex justify-between items-center">
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Now Serving</div>
-                  <div className="text-3xl font-black text-slate-700">{currentlyServing}</div>
-                </div>
-                {nextToken && nextToken !== '--' && (
-                  <div className="text-right">
-                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Up Next</div>
-                    <div className="text-xl font-bold text-slate-500">{nextToken}</div>
+              <div className="p-5 flex-1 flex gap-4">
+                <div className="flex-1 space-y-4">
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <span className="text-gray-500">Doctor</span>
+                    <span className="col-span-2 font-medium text-[#0A2540]">{today_appointment.doctor_id ? `Doctor ${today_appointment.doctor_id}` : 'Unassigned'}</span>
                   </div>
-                )}
-              </div>
-
-              <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-200 flex justify-between items-center shadow-sm">
-                <div>
-                  <div className="text-[10px] text-blue-600 uppercase font-bold tracking-widest mb-1">Your Token</div>
-                  <div className="text-3xl font-black text-blue-700">{token}</div>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <span className="text-gray-500">Reason</span>
+                    <span className="col-span-2 font-medium text-[#0A2540]">{today_appointment.appointment_type || 'Consultation'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <span className="text-gray-500">Time</span>
+                    <span className="col-span-2 font-medium text-[#0A2540]">{today_appointment.appointment_time || '--'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <span className="text-gray-500">Token</span>
+                    <span className="col-span-2 font-bold text-blue-600">{tokenNumber}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <span className="text-gray-500">Status</span>
+                    <span className="col-span-2">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-amber-100 text-amber-700">
+                        {status}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <span className="text-gray-500">Clinic</span>
+                    <span className="col-span-2 font-medium text-[#0A2540] flex items-center gap-1">
+                      <MapPin size={14} className="text-gray-400"/> City Health Clinic
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Patients Ahead</div>
-                  <div className="text-2xl font-black text-slate-700">{ahead}</div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl p-4 border border-slate-200 flex justify-between items-center">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Clock size={18} />
-                  <span className="font-semibold text-sm">Estimated wait</span>
-                </div>
-                <div className="text-xl font-black text-[#0A2540]">
-                  {waitMin} {waitMin !== '--' ? 'min' : ''}
+                <div className="flex flex-col items-center justify-center pt-2">
+                  <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center p-2 mb-2 border border-gray-200">
+                    <QrCode size={64} className="text-gray-700" />
+                  </div>
+                  <span className="text-[10px] text-gray-400">Scan at desk</span>
                 </div>
               </div>
             </div>
-          </ChartCard>
 
-          {/* WHAT HAPPENS NEXT */}
-          <ChartCard title="WHAT HAPPENS NEXT?" subtitle="Your clinic journey today">
-             <div className="mt-4 bg-white rounded-xl border border-slate-100 p-5 space-y-4 relative">
-                <div className="absolute left-[23px] top-6 bottom-6 w-0.5 bg-slate-100"></div>
-                
-                <div className="flex items-center gap-4 relative">
-                   <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center z-10 shrink-0"><CheckCircle size={12} /></div>
-                   <div className="font-semibold text-sm text-slate-700">Appointment confirmed</div>
-                </div>
-                
-                <div className="flex items-center gap-4 relative">
-                   <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center z-10 shrink-0"><CheckCircle size={12} /></div>
-                   <div className="font-semibold text-sm text-slate-700">Checked in</div>
-                </div>
-                
-                <div className="flex items-center gap-4 relative">
-                   <div className={`w-6 h-6 rounded-full flex items-center justify-center z-10 shrink-0 ${status === 'Waiting' ? 'bg-amber-100 text-amber-600 border-2 border-white ring-2 ring-amber-100' : 'bg-emerald-100 text-emerald-600'}`}>
-                     {status === 'Waiting' ? <div className="w-2 h-2 rounded-full bg-amber-500" /> : <CheckCircle size={12} />}
-                   </div>
-                   <div className={`font-semibold text-sm ${status === 'Waiting' ? 'text-amber-700' : 'text-slate-700'}`}>Queue</div>
-                </div>
-
-                <div className="flex items-center gap-4 relative">
-                   <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center z-10 shrink-0"><ArrowRight size={12} /></div>
-                   <div className="font-medium text-sm text-slate-500">Nurse preparation</div>
-                </div>
-
-                <div className="flex items-center gap-4 relative">
-                   <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center z-10 shrink-0"><ArrowRight size={12} /></div>
-                   <div className="font-medium text-sm text-slate-500">Doctor consultation</div>
-                </div>
-             </div>
-          </ChartCard>
-
-          {/* MEDICATIONS TODAY */}
-          <ChartCard title="MEDICATIONS TODAY" subtitle="Your daily schedule">
-             <div className="mt-4 bg-white rounded-xl border border-slate-100 p-2">
-                {todaySchedules.length === 0 ? (
-                  <div className="text-center py-6 text-slate-400">
-                    <Pill className="mx-auto mb-2 opacity-50" size={24} />
-                    <p className="text-sm font-medium">No medications scheduled for today</p>
+            {/* Live Queue Status */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[320px]">
+              <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 className="font-semibold text-[#0A2540] flex items-center gap-2">
+                  <Activity size={18} className="text-green-500" /> Live Queue Status
+                </h3>
+                <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline">View Queue</span>
+              </div>
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="grid grid-cols-3 gap-2 mb-6 text-center">
+                  <div className="bg-green-50 rounded-lg p-3 border border-green-100 flex flex-col justify-center">
+                    <span className="text-[10px] font-bold text-green-700 uppercase mb-1">Now Serving</span>
+                    <span className="text-xl font-bold text-green-700">A-21</span>
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    {todaySchedules.map((sched, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${sched.status === 'Taken' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
-                            {sched.status === 'Taken' ? <CheckCircle size={14} /> : <div className="w-2 h-2 rounded-full bg-amber-500" />}
-                          </div>
-                          <div>
-                            <div className="font-bold text-sm text-slate-700">{sched.medicine}</div>
-                            <div className="text-xs text-slate-500">{sched.time}</div>
-                          </div>
-                        </div>
-                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded ${sched.status === 'Taken' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                          {sched.status === 'Taken' ? 'Taken' : 'Upcoming'}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 flex flex-col justify-center shadow-inner">
+                    <span className="text-[10px] font-bold text-blue-700 uppercase mb-1">Your Token</span>
+                    <span className="text-2xl font-black text-blue-700">{tokenNumber}</span>
                   </div>
-                )}
-             </div>
-          </ChartCard>
-
-          {/* CARE JOURNEY */}
-          <div className="md:col-span-2">
-            <ChartCard title="CARE JOURNEY PROGRESS" subtitle="Based on recorded care and medication events">
-              <div className="mt-6 px-4">
-                <div className="h-4 bg-slate-100 rounded-full overflow-hidden flex">
-                  <div className="bg-emerald-500 h-full w-1/5 border-r border-white/20"></div>
-                  <div className="bg-emerald-400 h-full w-1/5 border-r border-white/20"></div>
-                  <div className="bg-emerald-300 h-full w-1/5 border-r border-white/20"></div>
-                  <div className="bg-slate-200 h-full w-2/5"></div>
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 flex flex-col justify-center">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase mb-1">Next</span>
+                    <span className="text-xl font-bold text-gray-600">A-22</span>
+                  </div>
                 </div>
-                <div className="flex justify-between mt-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  <span className="text-emerald-600">Appointment</span>
-                  <span className="text-emerald-600">Doctor</span>
-                  <span className="text-emerald-600">Prescription</span>
-                  <span>Medication</span>
-                  <span>Follow-up</span>
+                
+                <div className="grid grid-cols-4 gap-4 mt-auto border-t border-gray-100 pt-5">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-[#0A2540]">{patientsAhead}</p>
+                    <p className="text-[10px] text-gray-500 uppercase mt-1">Ahead</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-[#0A2540]">{waitTime}</p>
+                    <p className="text-[10px] text-gray-500 uppercase mt-1">Est Min</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-[#0A2540]">{queue_status.queue_position || '-'}</p>
+                    <p className="text-[10px] text-gray-500 uppercase mt-1">Position</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-blue-600 leading-tight">Waiting for Doctor</p>
+                    <p className="text-[9px] text-gray-400 uppercase mt-2">Stage</p>
+                  </div>
                 </div>
               </div>
-            </ChartCard>
+            </div>
+
           </div>
 
+          {/* Your Queue Progress */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full opacity-50 transform translate-x-32 -translate-y-32 pointer-events-none"></div>
+             
+             <h3 className="font-semibold text-[#0A2540] flex items-center gap-2 mb-8 relative z-10">
+                <Navigation size={18} className="text-blue-500" /> Your Queue Progress
+             </h3>
+             
+             <div className="flex items-center justify-between relative z-10 max-w-2xl mx-auto px-4">
+                {/* Connection line */}
+                <div className="absolute top-6 left-12 right-12 h-0.5 bg-gray-200 -z-10"></div>
+                
+                {/* Node 1 */}
+                <div className="flex flex-col items-center">
+                   <div className="w-12 h-12 bg-green-100 text-green-700 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-sm z-10">
+                      A-21
+                   </div>
+                   <span className="text-xs font-semibold text-green-700 mt-2">Now Serving</span>
+                </div>
+                
+                {/* Node 2 */}
+                <div className="flex flex-col items-center">
+                   <div className="w-12 h-12 bg-gray-50 text-gray-500 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-sm z-10">
+                      A-22
+                   </div>
+                   <span className="text-xs text-gray-500 mt-2">Next</span>
+                </div>
+                
+                {/* Node 3 */}
+                <div className="flex flex-col items-center">
+                   <div className="w-12 h-12 bg-gray-50 text-gray-500 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-sm z-10">
+                      A-23
+                   </div>
+                   <span className="text-xs text-gray-500 mt-2">Waiting</span>
+                </div>
+                
+                {/* Node 4 (You) */}
+                <div className="flex flex-col items-center">
+                   <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-lg border-4 border-blue-100 shadow-md z-10 transform scale-110">
+                      {tokenNumber}
+                   </div>
+                   <span className="text-xs font-bold text-blue-600 mt-3 uppercase tracking-wide">Your Turn</span>
+                </div>
+             </div>
+             <p className="text-center text-sm text-gray-500 mt-8 relative z-10">{patientsAhead} patients ahead of you</p>
+          </div>
+          
         </div>
-      )}
 
+        {/* RIGHT COLUMN */}
+        <div className="space-y-6">
+          
+          {/* Explainable AI block */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-[320px] flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="font-semibold text-[#0A2540] flex items-center gap-2">
+                <Clock size={18} className="text-blue-500" /> Why is my wait {waitTime} min?
+              </h3>
+              <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline">View Details</span>
+            </div>
+            
+            <div className="p-5 flex-1 flex flex-col overflow-y-auto">
+              {!waitExplanation || !waitExplanation.factors ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
+                  <AlertCircle size={32} className="mb-2 opacity-50" />
+                  <p className="text-sm">{waitExplanation?.explanation || "Explanation currently unavailable."}</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {waitExplanation.factors.map((factor, idx) => {
+                    const impactVal = parseFloat(factor.impact);
+                    const isPositive = impactVal >= 0;
+                    const widthPercent = Math.min(100, Math.max(10, Math.abs(impactVal) * 100));
+                    
+                    return (
+                      <div key={idx} className="relative">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-600 font-medium">{factor.label}</span>
+                          <span className={isPositive ? "text-amber-600 font-bold" : "text-green-600 font-bold"}>
+                            {isPositive ? '+' : ''}{factor.impact}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${isPositive ? 'bg-amber-400' : 'bg-green-400'}`} 
+                            style={{ width: `${widthPercent}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
+              {waitExplanation?.factors && waitExplanation.factors.length > 0 && (
+                 <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
+                   <div className="flex items-center gap-2 text-blue-600">
+                     <Clock size={16} />
+                     <span className="text-sm font-semibold">Estimated Wait</span>
+                   </div>
+                   <span className="text-xl font-bold text-[#0A2540]">{waitTime} minutes</span>
+                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Medications Today */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-auto max-h-[320px] flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="font-semibold text-[#0A2540] flex items-center gap-2">
+                <Pill size={18} className="text-blue-500" /> My Medications Today
+              </h3>
+              <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline">View All</span>
+            </div>
+            
+            <div className="p-0 overflow-y-auto">
+              {allSchedules.length === 0 ? (
+                 <p className="text-center text-sm text-gray-500 py-8">No medications scheduled for today.</p>
+              ) : allSchedules.slice(0, 4).map((med, i) => (
+                <div key={i} className="flex items-center justify-between px-5 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                  <div className="flex items-start gap-3">
+                     <div className={`mt-0.5 rounded-full p-1 ${med.status === 'Taken' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                        {med.status === 'Taken' ? <CheckCircle2 size={16} /> : <div className="w-4 h-4 rounded-full border-2 border-current"></div>}
+                     </div>
+                     <div>
+                       <p className="text-sm font-bold text-[#0A2540]">{med.medicine_name} <span className="text-gray-500 font-normal">{med.dosage}</span></p>
+                       <div className="flex items-center gap-2 mt-1">
+                         <span className="text-xs text-gray-500">{med.scheduled_time}</span>
+                         <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider ${med.status === 'Taken' ? 'text-green-700 bg-green-50' : 'text-blue-700 bg-blue-50'}`}>
+                           {med.status === 'Taken' ? 'Taken' : 'Upcoming'}
+                         </span>
+                       </div>
+                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Care Journey & Follow-up (Stacked in 1 card or 2 small cards) */}
+          <div className="grid grid-cols-1 gap-4">
+             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                <div className="flex justify-between items-center mb-3">
+                   <h3 className="text-sm font-semibold text-[#0A2540]">Care Journey Progress</h3>
+                   <span className="text-xs font-bold text-blue-600">{journeyPercent}%</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2 mb-2">
+                   <div className="h-2 rounded-full bg-blue-500" style={{ width: `${journeyPercent}%` }}></div>
+                </div>
+                <p className="text-[10px] text-gray-500">Based on recorded care and medication events</p>
+             </div>
+             
+             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center justify-between group cursor-pointer hover:border-blue-300 hover:shadow-md transition-all">
+                <div className="flex items-center gap-3">
+                   <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
+                     <Calendar size={18} />
+                   </div>
+                   <div>
+                      <p className="text-xs text-gray-500 font-medium">Next Follow-Up</p>
+                      <p className="text-sm font-bold text-[#0A2540]">05 Oct 2026 • Dr. Kumar</p>
+                   </div>
+                </div>
+                <div className="text-blue-500 group-hover:translate-x-1 transition-transform">
+                   <ChevronRight size={18} />
+                </div>
+             </div>
+          </div>
+          
+        </div>
+      </div>
     </div>
   );
 }
