@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from database.config import SessionLocal
+from services.orchestration import OrchestrationService
+orchestrator = OrchestrationService()
 from database.models import User, Patient
 import uuid
 import datetime
@@ -8,7 +9,7 @@ import datetime
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 def get_db():
-    db = SessionLocal()
+    db = orchestrator.Session()
     try:
         yield db
     finally:

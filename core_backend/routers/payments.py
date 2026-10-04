@@ -1,18 +1,20 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from database.config import SessionLocal
+from services.orchestration import OrchestrationService
+orchestrator = OrchestrationService()
 from database.models import Payment, Appointment, QueueEntry, PatientJourney
 import uuid
 import datetime
 # We need to import the broadcast function from main but that causes circular imports.
 # We will just post an event to the orchestrator or directly trigger WS.
 # For simplicity in this structure without circular imports, we can handle it in the orchestrator.
-from services.orchestration import orchestrator
+from services.orchestration import OrchestrationService
+orchestrator = OrchestrationService()
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 
 def get_db():
-    db = SessionLocal()
+    db = orchestrator.Session()
     try:
         yield db
     finally:
