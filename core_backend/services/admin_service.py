@@ -11,7 +11,7 @@ class AdminService:
 
     def get_analytics(self):
         with self.Session() as session:
-            today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             
             patients_today = session.query(func.count(QueueEntry.id)).filter(QueueEntry.created_at >= today).scalar() or 0
             appointments_today = session.query(func.count(Appointment.id)).filter(Appointment.created_at >= today).scalar() or 0

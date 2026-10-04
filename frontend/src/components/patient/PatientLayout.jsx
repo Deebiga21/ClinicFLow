@@ -8,13 +8,20 @@ import Header from '../shared/Header';
 import GlobalBackground from '../shared/GlobalBackground';
 import { api } from '../../services/api';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
+import { useAuth } from '../../context/AuthContext';
 
 import BookingWizard from '../../pages/patient/BookingWizard';
 
 export default function PatientLayout() {
   const location = useLocation();
   const [bookingOpen, setBookingOpen] = React.useState(false);
-  const [patientId, setPatientId] = useState(localStorage.getItem('demo_patient_id') || 'P_1');
+  const { user } = useAuth();
+  const [patientId, setPatientId] = useState(user?.patient_id || 'P_demo_1');
+
+  // Sync patientId if user changes
+  useEffect(() => {
+    if (user?.patient_id) setPatientId(user.patient_id);
+  }, [user]);
   
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -100,20 +107,7 @@ export default function PatientLayout() {
       <Sidebar items={patientItems} role="patient" />
       <div className="flex-1 ml-64 flex flex-col min-h-screen relative">
         <Header title={currentMeta.title} subtitle={currentMeta.sub} role="patient" />
-        <div className="flex justify-end px-6 pt-4">
-          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm text-sm font-medium">
-            <span className="text-slate-500">Viewing as:</span>
-            <select 
-              className="bg-transparent border-none outline-none font-bold text-[#0A2540] cursor-pointer"
-              value={patientId}
-              onChange={handlePatientChange}
-            >
-              {[...Array(10)].map((_, i) => (
-                <option key={`P_${i+1}`} value={`P_${i+1}`}>Patient {i+1}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        
         
         {toast && (
           <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce font-bold">
