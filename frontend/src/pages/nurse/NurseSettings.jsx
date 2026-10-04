@@ -4,7 +4,7 @@ import { api } from '../../services/api';
 import LoadingState from '../../components/shared/LoadingState';
 import StatusBadge from '../../components/shared/StatusBadge';
 
-export default function AdminSettings() {
+export default function NurseSettings() {
   const [settings, setSettings] = useState(null);
   const [systemStatus, setSystemStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -94,7 +94,7 @@ export default function AdminSettings() {
           <Settings className="w-6 h-6 text-gray-700" />
           System Settings
         </h1>
-        <p className="text-sm text-gray-500 mt-1">Configure ClinicFlow administrative preferences.</p>
+        <p className="text-sm text-gray-500 mt-1">Configure ClinicFlow nurseistrative preferences.</p>
       </div>
 
       {error && <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-100">{error}</div>}

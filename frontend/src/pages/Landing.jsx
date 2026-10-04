@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Activity } from 'lucide-react';
@@ -177,7 +177,7 @@ export default function Landing() {
             <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>AI Intelligence</Link>
             <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>How it Works</Link>
             <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>Research</Link>
-            <Link to="/admin" style={{ background: 'rgba(255,255,255,0.8)', color: '#0369a1', padding: '10px 24px', borderRadius: 40, textDecoration: 'none', fontWeight: 600 }}>
+            <Link to="/nurse" style={{ background: 'rgba(255,255,255,0.8)', color: '#0369a1', padding: '10px 24px', borderRadius: 40, textDecoration: 'none', fontWeight: 600 }}>
               Admin / Nurse Launch
             </Link>
           </div>
@@ -201,8 +201,8 @@ export default function Landing() {
               <Link to="/patient" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#0284c7', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)', border: '2px solid #0284c7' }}>
                 Patient Dashboard
               </Link>
-              <Link to="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0284c7', color: '#fff', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(2, 132, 199, 0.4)' }}>
-                Admin / Analyst Launch <ArrowRight size={20} />
+              <Link to="/nurse" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0284c7', color: '#fff', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(2, 132, 199, 0.4)' }}>
+                Nurse Dashboard <ArrowRight size={20} />
               </Link>
             </div>
 

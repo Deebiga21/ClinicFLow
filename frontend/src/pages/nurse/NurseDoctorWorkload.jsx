@@ -11,7 +11,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceDot
 } from 'recharts';
 
-export default function AdminDoctorWorkload() {
+export default function NurseDoctorWorkload() {
   const [summary, setSummary] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [chartData, setChartData] = useState([]);
@@ -21,9 +21,9 @@ export default function AdminDoctorWorkload() {
   const fetchData = async () => {
     try {
       const [summaryRes, doctorsRes, chartRes] = await Promise.all([
-        api.get('/admin/workload/summary').catch(() => null),
-        api.get('/admin/workload/doctors').catch(() => []),
-        api.get('/admin/workload/chart').catch(() => [])
+        api.get('/nurse/workload/summary').catch(() => null),
+        api.get('/nurse/workload/doctors').catch(() => []),
+        api.get('/nurse/workload/chart').catch(() => [])
       ]);
       setSummary(summaryRes);
       setDoctors(doctorsRes.data || []);

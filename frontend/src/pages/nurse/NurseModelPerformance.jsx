@@ -9,7 +9,7 @@ import { Activity, ShieldCheck, Database, Calendar, BarChart2 } from 'lucide-rea
 import { api } from '../../services/api';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 
-const AdminModelPerformance = () => {
+const NurseModelPerformance = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [selectedModel, setSelectedModel] = useState('waitingTime');
@@ -203,4 +203,4 @@ const AdminModelPerformance = () => {
   );
 };
 
-export default AdminModelPerformance;
+export default NurseModelPerformance;

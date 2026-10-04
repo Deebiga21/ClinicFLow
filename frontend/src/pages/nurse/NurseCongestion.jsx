@@ -11,7 +11,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts';
 
-export default function AdminCongestion() {
+export default function NurseCongestion() {
   const [data, setData] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,8 +20,8 @@ export default function AdminCongestion() {
   const fetchData = async () => {
     try {
       const [congestionRes, chartRes] = await Promise.all([
-        api.get('/admin/congestion/summary').catch(() => null),
-        api.get('/admin/congestion/chart').catch(() => [])
+        api.get('/nurse/congestion/summary').catch(() => null),
+        api.get('/nurse/congestion/chart').catch(() => [])
       ]);
       setData(congestionRes);
       setChartData(chartRes.data || []);

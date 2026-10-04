@@ -11,7 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line 
 } from 'recharts';
 
-export default function AdminMedicine() {
+export default function NurseMedicine() {
   const [inventory, setInventory] = useState([]);
   const [expiryRisks, setExpiryRisks] = useState([]);
   const [demandForecast, setDemandForecast] = useState(null);

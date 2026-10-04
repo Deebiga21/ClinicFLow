@@ -9,7 +9,7 @@ import { Activity, Brain, ArrowRight, Zap, Target, Search } from 'lucide-react';
 import { api } from '../../services/api';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 
-const AdminExplainability = () => {
+const NurseExplainability = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [selectedModel, setSelectedModel] = useState('waitingTime');
@@ -166,4 +166,4 @@ const AdminExplainability = () => {
   );
 };
 
-export default AdminExplainability;
+export default NurseExplainability;

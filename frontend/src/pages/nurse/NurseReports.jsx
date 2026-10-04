@@ -17,7 +17,7 @@ const REPORT_TYPES = [
   { id: 'anomaly', name: 'Anomaly Report', description: 'Log of detected anomalies in clinic operations.' }
 ];
 
-export default function AdminReports() {
+export default function NurseReports() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

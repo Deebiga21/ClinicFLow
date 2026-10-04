@@ -27,7 +27,7 @@ const peakTimesData = [
   { time: '20:00', load: 15 },
 ];
 
-export default function AdminAnalytics() {
+export default function NurseAnalytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

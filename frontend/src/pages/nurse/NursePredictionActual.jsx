@@ -26,7 +26,7 @@ const trendData = [
   { date: 'Sun', mae: 2.3 },
 ];
 
-export default function AdminPredictionActual() {
+export default function NursePredictionActual() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

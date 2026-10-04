@@ -10,7 +10,7 @@ import StatusBadge from '../../components/shared/StatusBadge';
 import LoadingState from '../../components/shared/LoadingState';
 import ChatPanel from '../../components/ChatPanel';
 
-export default function AdminCommandCenter() {
+export default function NurseCommandCenter() {
   const [data, setData] = useState(null);
   const [mlModels, setMlModels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ export default function AdminCommandCenter() {
       try {
         const [overviewResult, mlResult] = await Promise.all([
           api.getDashboardOverview(),
-          api.get('/admin/ml-models').catch(() => [])
+          api.get('/nurse/ml-models').catch(() => [])
         ]);
         setData(overviewResult);
         setMlModels(mlResult || []);

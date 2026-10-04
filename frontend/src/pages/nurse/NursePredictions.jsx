@@ -6,7 +6,7 @@ import EmptyState from '../../components/shared/EmptyState';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 import { api } from '../../services/api';
 
-export default function AdminPredictions() {
+export default function NursePredictions() {
   const [predictions, setPredictions] = useState([]);
   const [selectedPrediction, setSelectedPrediction] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ export default function AdminPredictions() {
 
   const fetchData = async () => {
     try {
-      const res = await api.get('/admin/predictions').catch(() => []);
+      const res = await api.get('/nurse/predictions').catch(() => []);
       const data = Array.isArray(res) ? res : (res.data || []);
       setPredictions(data);
       if (data.length > 0 && !selectedPrediction) {

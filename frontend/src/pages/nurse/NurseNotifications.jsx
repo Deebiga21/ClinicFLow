@@ -5,7 +5,7 @@ import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 import LoadingState from '../../components/shared/LoadingState';
 import EmptyState from '../../components/shared/EmptyState';
 
-export default function AdminNotifications() {
+export default function NurseNotifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,7 +15,7 @@ export default function AdminNotifications() {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getAdminNotifications().catch(() => []);
+      const data = await api.getNurseNotifications().catch(() => []);
       setNotifications(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);

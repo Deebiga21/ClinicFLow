@@ -11,7 +11,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar
 } from 'recharts';
 
-export default function AdminPatientFlow() {
+export default function NursePatientFlow() {
   const [data, setData] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [liveQueue, setLiveQueue] = useState([]);
@@ -24,10 +24,10 @@ export default function AdminPatientFlow() {
   const fetchData = async () => {
     try {
       const [flowDataRes, chartRes, queueRes, docRes] = await Promise.all([
-        api.get('/admin/patient-flow/summary').catch(() => ({})),
-        api.get('/admin/patient-flow/chart').catch(() => []),
-        api.get('/admin/patient-flow/live-queue').catch(() => []),
-        api.get('/admin/patient-flow/doctor-flow').catch(() => [])
+        api.get('/nurse/patient-flow/summary').catch(() => ({})),
+        api.get('/nurse/patient-flow/chart').catch(() => []),
+        api.get('/nurse/patient-flow/live-queue').catch(() => []),
+        api.get('/nurse/patient-flow/doctor-flow').catch(() => [])
       ]);
       
       // Because api.get strips the {data: ...} wrapper, the responses are the actual data

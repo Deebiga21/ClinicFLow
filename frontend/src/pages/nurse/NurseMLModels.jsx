@@ -6,7 +6,7 @@ import EmptyState from '../../components/shared/EmptyState';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 import { api } from '../../services/api';
 
-export default function AdminMLModels() {
+export default function NurseMLModels() {
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ export default function AdminMLModels() {
 
   const fetchData = async () => {
     try {
-      const res = await api.get('/admin/ml-models').catch(() => []);
+      const res = await api.get('/nurse/ml-models').catch(() => []);
       const data = Array.isArray(res) ? res : (res.data || []);
       setModels(data);
       if (data.length > 0 && !selectedModel) {

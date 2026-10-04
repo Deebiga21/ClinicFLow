@@ -1,34 +1,38 @@
-import re
-
-with open("core_backend/database/models.py", "r") as f:
-    code = f.read()
+with open(r"d:\ClinicFLow\core_backend\database\models.py", "r") as f:
+    content = f.read()
 
 new_models = """
-class Anomaly(Base):
-    __tablename__ = 'anomalies'
+class User(Base):
+    __tablename__ = 'users'
     id = Column(String, primary_key=True)
-    type = Column(String)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
-    observed_value = Column(Float, nullable=True)
-    expected_value = Column(Float, nullable=True)
-    severity = Column(String)
-    status = Column(String)
-    description = Column(String)
+    role = Column(String)
+    phone = Column(String)
+    email = Column(String)
+    password_hash = Column(String)
+    patient_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-class Notification(Base):
-    __tablename__ = 'notifications'
+class Payment(Base):
+    __tablename__ = 'payments'
     id = Column(String, primary_key=True)
-    patient_id = Column(String, ForeignKey('patients.id'), nullable=True)
-    type = Column(String)
-    title = Column(String)
-    message = Column(String)
-    severity = Column(String)
-    read = Column(Boolean, default=False)
+    patient_id = Column(String, ForeignKey('patients.id'))
+    appointment_id = Column(String, ForeignKey('appointments.id'))
+    amount = Column(Float)
+    status = Column(String)
+    payment_method = Column(String)
+    transaction_ref = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 """
 
-if "class Anomaly(Base):" not in code:
-    code = code.replace('if __name__ == "__main__":', new_models + '\n\nif __name__ == "__main__":')
-    with open("core_backend/database/models.py", "w") as f:
-        f.write(code)
+if "class User(" not in content:
+    content = content.replace("class Patient(Base):", new_models + "\nclass Patient(Base):")
+    
+    # Also update Appointment
+    content = content.replace(
+        "appointment_type = Column(String)",
+        "appointment_type = Column(String)\n    payment_status = Column(String, default='Pending')\n    token_status = Column(String, default='Pending')"
+    )
+
+with open(r"d:\ClinicFLow\core_backend\database\models.py", "w") as f:
+    f.write(content)
+print("Updated models.py")

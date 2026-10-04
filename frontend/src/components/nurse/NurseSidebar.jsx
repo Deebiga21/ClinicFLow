@@ -6,51 +6,51 @@ import {
   Box, Pill, FileText, Bell, Settings, Moon
 } from 'lucide-react';
 
-export default function AdminSidebar() {
+export default function NurseSidebar() {
   const sections = [
     {
       title: 'COMMAND CENTER',
       items: [
-        { to: '/admin', end: true, icon: Home, label: 'Command Center' },
+        { to: '/nurse', end: true, icon: Home, label: 'Command Center' },
       ]
     },
     {
       title: 'CLINIC INTELLIGENCE',
       items: [
-        { to: '/admin/patient-flow', icon: Users, label: 'Patient Flow' },
-        { to: '/admin/doctor-workload', icon: Stethoscope, label: 'Doctor Workload' },
-        { to: '/admin/congestion', icon: Activity, label: 'Congestion Forecast' },
+        { to: '/nurse/patient-flow', icon: Users, label: 'Patient Flow' },
+        { to: '/nurse/doctor-workload', icon: Stethoscope, label: 'Doctor Workload' },
+        { to: '/nurse/congestion', icon: Activity, label: 'Congestion Forecast' },
       ]
     },
     {
       title: 'AI / ML',
       items: [
-        { to: '/admin/ml', icon: Cpu, label: 'ML Model Center' },
-        { to: '/admin/predictions', icon: Zap, label: 'Predictions' },
-        { to: '/admin/explainability', icon: Lightbulb, label: 'Explainable AI' },
-        { to: '/admin/model-performance', icon: BarChart2, label: 'Model Performance' },
-        { to: '/admin/prediction-feedback', icon: RefreshCw, label: 'Prediction vs Actual' },
-        { to: '/admin/anomalies', icon: AlertTriangle, label: 'Anomaly Center' },
+        { to: '/nurse/ml', icon: Cpu, label: 'ML Model Center' },
+        { to: '/nurse/predictions', icon: Zap, label: 'Predictions' },
+        { to: '/nurse/explainability', icon: Lightbulb, label: 'Explainable AI' },
+        { to: '/nurse/model-performance', icon: BarChart2, label: 'Model Performance' },
+        { to: '/nurse/prediction-feedback', icon: RefreshCw, label: 'Prediction vs Actual' },
+        { to: '/nurse/anomalies', icon: AlertTriangle, label: 'Anomaly Center' },
       ]
     },
     {
       title: 'SIMULATION',
       items: [
-        { to: '/admin/digital-twin', icon: Box, label: 'Digital Twin' },
+        { to: '/nurse/digital-twin', icon: Box, label: 'Digital Twin' },
       ]
     },
     {
       title: 'RESOURCE INTELLIGENCE',
       items: [
-        { to: '/admin/medicines', icon: Pill, label: 'Medicine Intelligence' },
-        { to: '/admin/reports', icon: FileText, label: 'Reports' },
+        { to: '/nurse/medicines', icon: Pill, label: 'Medicine Intelligence' },
+        { to: '/nurse/reports', icon: FileText, label: 'Reports' },
       ]
     },
     {
       title: 'SYSTEM',
       items: [
-        { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
-        { to: '/admin/settings', icon: Settings, label: 'Settings' },
+        { to: '/nurse/notifications', icon: Bell, label: 'Notifications' },
+        { to: '/nurse/settings', icon: Settings, label: 'Settings' },
       ]
     }
   ];
@@ -103,7 +103,7 @@ export default function AdminSidebar() {
            <div className="w-9 h-9 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
               A
            </div>
-           <span className="text-slate-800 text-sm font-bold truncate">Admin User</span>
+           <span className="text-slate-800 text-sm font-bold truncate">Nurse User</span>
         </div>
       </div>
     </aside>

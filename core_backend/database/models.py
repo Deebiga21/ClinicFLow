@@ -5,6 +5,28 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 Base = declarative_base()
 
+
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(String, primary_key=True)
+    role = Column(String)
+    phone = Column(String)
+    email = Column(String)
+    password_hash = Column(String)
+    patient_id = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class Payment(Base):
+    __tablename__ = 'payments'
+    id = Column(String, primary_key=True)
+    patient_id = Column(String, ForeignKey('patients.id'))
+    appointment_id = Column(String, ForeignKey('appointments.id'))
+    amount = Column(Float)
+    status = Column(String)
+    payment_method = Column(String)
+    transaction_ref = Column(String)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 class Patient(Base):
     __tablename__ = 'patients'
     id = Column(String, primary_key=True)
@@ -35,6 +57,8 @@ class Appointment(Base):
     appointment_date = Column(String)
     appointment_time = Column(String)
     appointment_type = Column(String)
+    payment_status = Column(String, default='Pending')
+    token_status = Column(String, default='Pending')
     status = Column(String)
     check_in_time = Column(DateTime, nullable=True)
     cancellation_time = Column(DateTime, nullable=True)

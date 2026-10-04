@@ -6,7 +6,7 @@ import { AlertTriangle, Filter, Search, Clock, Activity, Calendar } from 'lucide
 import { api } from '../../services/api';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 
-const AdminAnomalies = () => {
+const NurseAnomalies = () => {
   const [loading, setLoading] = useState(true);
   const [anomalies, setAnomalies] = useState([]);
   const [timeFilter, setTimeFilter] = useState('today');
@@ -158,4 +158,4 @@ const AdminAnomalies = () => {
   );
 };
 
-export default AdminAnomalies;
+export default NurseAnomalies;

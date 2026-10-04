@@ -5,7 +5,7 @@ import EmptyState from '../../components/shared/EmptyState';
 import { Cpu, Play, AlertCircle, Settings2, Users, Clock, Calendar, Activity, Zap } from 'lucide-react';
 import { api } from '../../services/api';
 
-const AdminDigitalTwin = () => {
+const NurseDigitalTwin = () => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [currentState, setCurrentState] = useState(null);
@@ -289,4 +289,4 @@ const AdminDigitalTwin = () => {
   );
 };
 
-export default AdminDigitalTwin;
+export default NurseDigitalTwin;

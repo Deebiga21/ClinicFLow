@@ -7,7 +7,7 @@ import { Scale, RefreshCw, TrendingDown, Clock, CheckCircle2 } from 'lucide-reac
 import { api } from '../../services/api';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 
-const AdminPredictionFeedback = () => {
+const NursePredictionFeedback = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const { lastEvent } = useClinicWebSocket();
@@ -185,4 +185,4 @@ const Database = ({ className }) => (
   </svg>
 );
 
-export default AdminPredictionFeedback;
+export default NursePredictionFeedback;
