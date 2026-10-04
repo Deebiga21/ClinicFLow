@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, UserCheck, Stethoscope, CheckCircle2, 
-  AlertTriangle, Pill, User, Bell, Clock, Activity, MessageSquare
+  AlertTriangle, Pill, User, Bell, Clock, Activity, MessageSquare, Home, BrainCircuit
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useClinicWebSocket } from '../hooks/useClinicWebSocket';
 import ChatPanel from '../components/ChatPanel';
+import Sidebar from '../components/shared/Sidebar';
+import Header from '../components/shared/Header';
 
 export default function NurseDashboard() {
   const [data, setData] = useState(null);
@@ -27,7 +29,6 @@ export default function NurseDashboard() {
     fetchData();
   }, []);
 
-  // Listen for websocket updates
   useEffect(() => {
     if (lastEvent) {
       const relevantEvents = [
@@ -40,26 +41,36 @@ export default function NurseDashboard() {
     }
   }, [lastEvent]);
 
-  const markReady = async (queueId) => {
-     // call backend to mark ready
-     // trigger patient_readiness_updated
-     // for now just refetch
-     fetchData();
-  };
-
   if (loading || !data) {
     return <div className="flex h-screen items-center justify-center bg-[#f8fafc]"><div className="animate-spin h-8 w-8 border-4 border-indigo-500 rounded-full border-t-transparent"></div></div>;
   }
 
   const { clinic_overview, live_queue, patient_readiness, medicine_alerts, recommendations } = data;
   
-  // Find next patient
   const nextPatient = live_queue.length > 0 ? live_queue.find(q => q.status === 'Waiting') : null;
   const nextReadiness = nextPatient ? patient_readiness.find(pr => pr.patient_id === nextPatient.patient_id) : null;
 
+  const nurseItems = [
+    {
+      title: 'NURSE',
+      links: [
+        { to: '/nurse', end: true, icon: Home, label: 'Home' },
+        { to: '/nurse', icon: Users, label: 'Patient Queue' },
+        { to: '/nurse', icon: UserCheck, label: 'Patient Preparation' },
+        { to: '/nurse', icon: MessageSquare, label: 'Nurse Chat' },
+        { to: '/nurse', icon: Activity, label: 'AI Assistant' },
+        { to: '/nurse', icon: Bell, label: 'Notifications' },
+        { to: '/nurse', icon: User, label: 'Profile' }
+      ]
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans">
-      {/* Top Navigation Bar / Header Area */}
+    <div className="min-h-screen bg-[#f8fafc] font-sans flex text-slate-800">
+      <Sidebar items={nurseItems} role="nurse" />
+      
+      <div className="flex-1 ml-64 flex flex-col min-h-screen relative">
+        {/* Top Navigation Bar / Header Area */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div className="bg-blue-600 p-2 rounded-full">
@@ -310,6 +321,7 @@ export default function NurseDashboard() {
           </div>
           
         </div>
+      </div>
       </div>
     </div>
   );
