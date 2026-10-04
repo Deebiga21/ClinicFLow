@@ -229,7 +229,7 @@ export default function Landing() {
               { src: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80', label: 'Patient Dashboard', desc: 'Your clinic visit and wait time', path: '/patient' },
               { src: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&q=80', label: 'Admin Center', desc: 'Clinic intelligence & operations', path: '/admin' },
               { src: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800&q=80', label: 'Doctor Space', desc: 'Consultation & active workload', path: '/doctor' },
-              { src: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&q=80', label: 'Reception', desc: 'Patient check-in & queue token', path: '/reception' },
+              { src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80', label: 'Backend Pipeline', desc: 'Execute & view full ML workflow', path: '/pipeline' },
               { src: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&q=80', label: 'AI Predict', desc: 'Waiting time & congestion ML', path: '/admin/predictions' }
             ]}
             imageWidth={250}

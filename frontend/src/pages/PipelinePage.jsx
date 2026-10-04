@@ -1,29 +1,44 @@
 import React, { useState, useEffect } from 'react';
+import { useClinicWebSocket } from '../hooks/useClinicWebSocket';
+
+const API_BASE = 'http://localhost:8000';
 
 const PipelinePage = () => {
   const [pipelineState, setPipelineState] = useState(null);
   const [testResult, setTestResult] = useState(null);
   const [wsMessages, setWsMessages] = useState([]);
+  
+  const { lastEvent } = useClinicWebSocket();
 
   useEffect(() => {
     // Fetch initial state
-    fetch('http://localhost:8000/api/pipeline/state')
-      .then(res => res.json())
-      .then(data => setPipelineState(data))
-      .catch(err => console.error(err));
-
-    // WebSocket connection
-    const ws = new WebSocket('ws://localhost:8000/ws');
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setWsMessages(prev => [data, ...prev].slice(0, 5)); // keep last 5
+    const loadState = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/pipeline/state`);
+        const data = await res.json();
+        setPipelineState(data);
+      } catch (err) {
+        console.error(err);
+      }
     };
-    return () => ws.close();
+    loadState();
   }, []);
 
+  useEffect(() => {
+    if (lastEvent) {
+      setWsMessages(prev => [lastEvent, ...prev].slice(0, 10)); // keep last 10
+      // Refresh state on any event
+      fetch(`${API_BASE}/api/pipeline/state`)
+        .then(r => r.json())
+        .then(setPipelineState)
+        .catch(console.error);
+    }
+  }, [lastEvent]);
+
   const runTestFlow = async () => {
+    setTestResult(null);
     try {
-      const res = await fetch('http://localhost:8000/api/pipeline/test-flow');
+      const res = await fetch(`${API_BASE}/api/pipeline/test-flow`);
       const data = await res.json();
       setTestResult(data);
     } catch (err) {
@@ -32,70 +47,115 @@ const PipelinePage = () => {
   };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1>ClinicFlow Intelligence Pipeline</h1>
+    <div className="p-8 max-w-7xl mx-auto font-sans bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8 border-b pb-4">ClinicFlow Core Pipeline & Workflow</h1>
       
-      <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
-        <div style={{ flex: 1, padding: '1rem', border: '1px solid #ccc', borderRadius: '8px' }}>
-          <h3>1. THE BASE PIPELINE / DATA FLOW</h3>
-          <pre style={{ background: '#f5f5f5', padding: '1rem', borderRadius: '4px' }}>
-{`DATABASE
-   ↓
-BACKEND SERVICES
-   ↓
-ML FEATURE ENGINEERING
-   ↓
-ML MODELS
-   ↓
-PREDICTIONS
-   ↓
-FRONTEND`}
-          </pre>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">1. The Base Pipeline Architecture</h3>
+          <div className="bg-gray-800 text-green-400 p-4 rounded-lg font-mono text-sm leading-relaxed overflow-x-auto shadow-inner">
+{`PATIENT ACTION (e.g. Check-in)
+       ↓
+FASTAPI BACKEND
+       ↓
+ORCHESTRATION SERVICE (Transaction Safe)
+       ↓
+SQLITE DATABASE (Single Source of Truth)
+       ↓
+ML FEATURE ENGINEERING (Real-time DB query)
+       ↓
+XGBOOST ML MODELS (Prediction)
+       ↓
+WEBSOCKET BROADCAST
+       ↓
+FRONTEND (Nurse/Admin Dashboards Update)`}
+          </div>
         </div>
 
-        <div style={{ flex: 1, padding: '1rem', border: '1px solid #ccc', borderRadius: '8px' }}>
-          <h3>2. LIVE CLINIC STATE</h3>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">2. Live Clinic State</h3>
           {pipelineState ? (
-            <ul>
-              <li>Patients Waiting: {pipelineState.waiting_count}</li>
-              <li>Patients in Consultation: {pipelineState.in_consultation_count}</li>
-              <li>ML Models Loaded: {pipelineState.models_loaded ? 'Yes' : 'No'}</li>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                <span className="font-semibold">Patients Waiting</span>
+                <span className="text-xl font-bold text-blue-600">{pipelineState.waiting_count}</span>
+              </li>
+              <li className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                <span className="font-semibold">In Consultation</span>
+                <span className="text-xl font-bold text-purple-600">{pipelineState.in_consultation_count}</span>
+              </li>
+              <li className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                <span className="font-semibold">ML Models Loaded</span>
+                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">
+                  {pipelineState.models_loaded ? 'ACTIVE' : 'INACTIVE'}
+                </span>
+              </li>
             </ul>
           ) : (
-            <p>Loading state from core backend...</p>
+            <div className="animate-pulse flex space-x-4">
+              <div className="flex-1 space-y-4 py-1">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      <div style={{ border: '1px solid #2196F3', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
-        <h3>3. END-TO-END PATIENT LIFECYCLE TEST</h3>
-        <p>This will simulate a patient checking in, receiving a waiting time prediction, starting consultation, and recording the actual duration for ML feedback.</p>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200 mb-8">
+        <h3 className="text-xl font-bold text-gray-800 mb-2">3. End-To-End Patient Journey Test</h3>
+        <p className="text-gray-600 mb-6">
+          This simulates a full patient workflow hitting the unified backend APIs. It checks the patient in, scores readiness, calls them next, begins the consultation, records the completion (creating ML feedback), and prescribes medication.
+        </p>
         <button 
           onClick={runTestFlow}
-          style={{ background: '#2196F3', color: 'white', border: 'none', padding: '0.8rem 1.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '1rem' }}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-md active:scale-95"
         >
-          Run Pipeline Flow Test
+          Execute Full Workflow Pipeline
         </button>
 
         {testResult && (
-          <div style={{ marginTop: '1.5rem', background: '#e3f2fd', padding: '1rem', borderRadius: '4px' }}>
-            <h4>Test Output:</h4>
-            {testResult.flow.map((step, idx) => (
-              <div key={idx} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #bbdefb' }}>
-                <strong>Event: {step.event}</strong>
-                <pre>{JSON.stringify(step, null, 2)}</pre>
+          <div className="mt-6 bg-blue-50 border border-blue-100 p-6 rounded-lg">
+            <h4 className="text-lg font-bold text-blue-800 mb-4">Pipeline Execution Output:</h4>
+            {testResult.error ? (
+              <div className="p-4 bg-red-100 text-red-700 rounded-md font-mono">{JSON.stringify(testResult.error)}</div>
+            ) : (
+              <div className="space-y-4">
+                {testResult.flow?.map((step, idx) => (
+                  <div key={idx} className="bg-white p-4 rounded border shadow-sm">
+                    <strong className="block text-gray-800 mb-2 uppercase text-sm tracking-wider">
+                      Step {idx + 1}: {step?.event?.replace(/_/g, ' ')}
+                    </strong>
+                    <pre className="text-xs font-mono bg-gray-50 p-3 rounded overflow-x-auto text-gray-600">
+                      {JSON.stringify(step, null, 2)}
+                    </pre>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
 
-      <div>
-        <h3>4. REAL-TIME WEBSOCKET EVENTS</h3>
-        <div style={{ background: '#333', color: '#0f0', padding: '1rem', borderRadius: '4px', minHeight: '150px', fontFamily: 'monospace' }}>
-          {wsMessages.length === 0 && <p>No events yet. Run the flow to see events broadcasted.</p>}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2 flex items-center">
+          <span className="relative flex h-3 w-3 mr-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+          </span>
+          4. Live WebSocket Stream
+        </h3>
+        <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm min-h-[250px] shadow-inner flex flex-col gap-2">
+          {wsMessages.length === 0 && (
+            <p className="text-gray-500 italic">Waiting for backend broadcasts... Try executing the pipeline above.</p>
+          )}
           {wsMessages.map((msg, i) => (
-            <div key={i}>[{new Date().toLocaleTimeString()}] {JSON.stringify(msg)}</div>
+            <div key={i} className="border-b border-gray-800 pb-2">
+              <span className="text-gray-500">[{new Date().toLocaleTimeString()}]</span> 
+              <span className="text-blue-300 ml-2 font-bold">{msg.type}</span>
+              <pre className="mt-1 pl-4 text-xs text-gray-300 whitespace-pre-wrap">{JSON.stringify(msg.data, null, 2)}</pre>
+            </div>
           ))}
         </div>
       </div>
