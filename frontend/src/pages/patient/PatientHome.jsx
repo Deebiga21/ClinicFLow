@@ -5,10 +5,36 @@ import {
   MapPin, Calendar, Pill, Navigation, AlertCircle, ChevronRight, Activity, Map
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function PatientHome() {
   const { data, loading } = useOutletContext();
   const [waitExplanation, setWaitExplanation] = useState(null);
+
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [checkInSuccess, setCheckInSuccess] = useState(false);
+
+  const handleQRClick = async () => {
+    // We only want to allow check-in if they haven't checked in yet
+    // If data.queue_status exists, they are already checked in.
+    if (!data?.today_appointment?.id || data?.queue_status || isCheckingIn || checkInSuccess) return;
+    setIsCheckingIn(true);
+    try {
+      // Simulate real-world kiosk scan:
+      await fetch('http://localhost:8000/api/pipeline/check-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointment_id: data.today_appointment.id })
+      });
+      setCheckInSuccess(true);
+      setTimeout(() => setCheckInSuccess(false), 3000);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setIsCheckingIn(false);
+    }
+  };
+
 
   useEffect(() => {
     if (data?.patient?.id) {
