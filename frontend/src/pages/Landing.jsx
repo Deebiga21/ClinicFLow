@@ -216,14 +216,25 @@ export default function Landing() {
       {/* Carousel Section */}
       <div style={{ padding: '100px 0', background: 'linear-gradient(to bottom, #f0f9ff, #ffffff)', position: 'relative', zIndex: 10 }}>
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-          <h2 style={{ fontSize: '42px', fontWeight: 800, color: '#0f172a', letterSpacing: '-1px' }}>Trusted by Modern Clinics</h2>
+          <h2 style={{ fontSize: '42px', fontWeight: 800, color: '#0f172a', letterSpacing: '-1px' }}>Explore ClinicFlow Modules</h2>
           <p style={{ fontSize: '18px', color: '#64748b', maxWidth: '600px', margin: '16px auto 0' }}>
-            A seamless digital experience for patients and an intelligent operational dashboard for healthcare providers.
+            Spin the interactive wheel and tap a card to jump directly into the corresponding dashboard.
           </p>
         </div>
         
         <div style={{ height: '600px', width: '100%', position: 'relative' }}>
-          <RoundCarousel />
+          <RoundCarousel 
+            items={[
+              { src: 'https://images.unsplash.com/photo-1551076805-e1869043e560?w=800&q=80', label: 'Nurse Dashboard', desc: 'Real-time patient flow & prep', path: '/nurse' },
+              { src: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80', label: 'Patient Dashboard', desc: 'Your clinic visit and wait time', path: '/patient' },
+              { src: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&q=80', label: 'Admin Center', desc: 'Clinic intelligence & operations', path: '/admin' },
+              { src: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800&q=80', label: 'Doctor Space', desc: 'Consultation & active workload', path: '/doctor' },
+              { src: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&q=80', label: 'Reception', desc: 'Patient check-in & queue token', path: '/reception' },
+              { src: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&q=80', label: 'AI Predict', desc: 'Waiting time & congestion ML', path: '/admin/predictions' }
+            ]}
+            imageWidth={250}
+            imageHeight={350}
+          />
         </div>
       </div>
 

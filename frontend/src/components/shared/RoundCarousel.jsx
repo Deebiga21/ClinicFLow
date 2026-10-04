@@ -1,20 +1,10 @@
 import React, { useEffect, useRef } from "react";
-
-const CLINIC_IMAGES = [
-  { src: "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&q=80" }, // hospital corridor
-  { src: "https://images.unsplash.com/photo-1551076805-e1869043e560?w=800&q=80" }, // nurse/doctor
-  { src: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80" }, // patient care
-  { src: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800&q=80" }, // waiting room
-  { src: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&q=80" }, // medical staff
-  { src: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80" }, // consultation
-  { src: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&q=80" }, // modern clinic
-  { src: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80" }, // healthcare professional
-];
+import { useNavigate } from "react-router-dom";
 
 function __OriginkitBase_RoundCarousel({
-  images = CLINIC_IMAGES,
-  imageWidth = 300,
-  imageHeight = 300,
+  items = [],
+  imageWidth = 250,
+  imageHeight = 350,
   spacing = 3,
   speed = 7,
   direction = "right",
@@ -27,15 +17,14 @@ function __OriginkitBase_RoundCarousel({
   background = "transparent",
   style = {},
 }) {
-  const items = images.length > 0 ? images : CLINIC_IMAGES;
   const count = items.length;
-
   const ringRef = useRef(null);
   const rafRef = useRef(0);
   const rotYRef = useRef(0);
   const velRef = useRef(0);
   const lastRef = useRef(0);
-  const dragRef = useRef({ active: false, x: 0 });
+  const dragRef = useRef({ active: false, x: 0, moved: false });
+  const navigate = useNavigate();
 
   const angle = 360 / count;
   const factor = 1 + spacing * 0.15;
@@ -73,13 +62,14 @@ function __OriginkitBase_RoundCarousel({
   const onPointerDown = (e) => {
     if (!drag) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
-    dragRef.current = { active: true, x: e.clientX };
+    dragRef.current = { active: true, x: e.clientX, moved: false };
     velRef.current = 0;
   };
   const onPointerMove = (e) => {
     const d = dragRef.current;
     if (!d.active) return;
     const dx = e.clientX - d.x;
+    if (Math.abs(dx) > 5) d.moved = true; // threshold for drag vs click
     d.x = e.clientX;
     const k = 0.3 * sensitivity;
     rotYRef.current += dx * k;
@@ -90,6 +80,16 @@ function __OriginkitBase_RoundCarousel({
     dragRef.current.active = false;
   };
 
+  const handleItemClick = (e, item) => {
+    if (dragRef.current.moved) {
+      e.preventDefault();
+      return;
+    }
+    if (item.path) {
+      navigate(item.path);
+    }
+  };
+
   const faceBase = {
     position: "absolute",
     inset: 0,
@@ -98,6 +98,10 @@ function __OriginkitBase_RoundCarousel({
     backfaceVisibility: "hidden",
     backgroundSize: "cover",
     backgroundPosition: "center",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "flex-end",
+    cursor: "pointer",
   };
 
   return (
@@ -135,8 +139,8 @@ function __OriginkitBase_RoundCarousel({
             transformStyle: "preserve-3d",
           }}
         >
-          {items.map((img, i) => {
-            const src = img?.src;
+          {items.map((item, i) => {
+            const src = item?.src;
             return (
               <div
                 key={i}
@@ -146,7 +150,9 @@ function __OriginkitBase_RoundCarousel({
                   transform: `rotateY(${i * angle}deg) translateZ(${radius}px)`,
                   transformStyle: "preserve-3d",
                 }}
+                onClick={(e) => handleItemClick(e, item)}
               >
+                {/* Front Face */}
                 <div
                   style={{
                     ...faceBase,
@@ -154,7 +160,21 @@ function __OriginkitBase_RoundCarousel({
                     backgroundImage: src ? `url(${src})` : undefined,
                     boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
                   }}
-                />
+                >
+                  {/* Overlay for text */}
+                  {item.label && (
+                    <div style={{
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0))',
+                      padding: '40px 20px 20px 20px',
+                      color: 'white',
+                      textAlign: 'center',
+                    }}>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{item.label}</h3>
+                      {item.desc && <p style={{ fontSize: '0.8rem', margin: '4px 0 0 0', opacity: 0.9 }}>{item.desc}</p>}
+                    </div>
+                  )}
+                </div>
+                {/* Back Face */}
                 <div
                   style={{
                     ...faceBase,
@@ -173,12 +193,6 @@ function __OriginkitBase_RoundCarousel({
   );
 }
 
-const originkitPresetProps = {
-  imageWidth: 210,
-  imageHeight: 280, // Made it slightly taller for portrait medical shots
-  background: "transparent"
-};
-
 export default function RoundCarousel(props) {
-  return <__OriginkitBase_RoundCarousel {...originkitPresetProps} {...props} />;
+  return <__OriginkitBase_RoundCarousel {...props} />;
 }

@@ -22,14 +22,12 @@ export default function PatientHome() {
     return <div className="flex h-[80vh] items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-indigo-500 rounded-full border-t-transparent"></div></div>;
   }
 
-  const { 
-    patient = {}, 
-    today_appointment = {}, 
-    queue_status = {}, 
-    waiting_prediction = {}, 
-    journey = [], 
-    medication_summary = []
-  } = data;
+  const patient = data?.patient || {};
+  const today_appointment = data?.today_appointment || {};
+  const queue_status = data?.queue_status || {};
+  const waiting_prediction = data?.waiting_prediction || {};
+  const journey = data?.journey || [];
+  const medication_summary = data?.medication_summary || [];
   
   const tokenNumber = queue_status.queue_position ? `A-${queue_status.queue_position}` : 'N/A';
   const status = queue_status.status || 'Scheduled';
