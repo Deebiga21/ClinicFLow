@@ -20,7 +20,7 @@ export default function NursePredictions() {
 
   const fetchData = async () => {
     try {
-      const res = await api.get('/nurse/predictions').catch(() => []);
+      const res = await api.get('/admin/predictions').catch(() => []);
       const data = Array.isArray(res) ? res : (res.data || []);
       setPredictions(data);
       if (data.length > 0 && !selectedPrediction) {

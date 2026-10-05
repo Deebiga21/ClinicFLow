@@ -10,7 +10,11 @@ class PatientService:
     def get_visit_status(self, patient_id: str):
         with self.Session() as session:
             today = session.execute(text(
-                "SELECT * FROM appointments WHERE patient_id = :patient_id ORDER BY appointment_date DESC, appointment_time DESC LIMIT 1"
+                """SELECT a.*, d.name as doctor_name, d.department as doctor_department 
+                   FROM appointments a 
+                   LEFT JOIN doctors d ON a.doctor_id = d.id 
+                   WHERE a.patient_id = :patient_id 
+                   ORDER BY a.appointment_date DESC, a.appointment_time DESC LIMIT 1"""
             ), {"patient_id": patient_id}).mappings().first()
 
             if not today:

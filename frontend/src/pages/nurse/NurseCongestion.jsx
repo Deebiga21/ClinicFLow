@@ -20,8 +20,8 @@ export default function NurseCongestion() {
   const fetchData = async () => {
     try {
       const [congestionRes, chartRes] = await Promise.all([
-        api.get('/nurse/congestion/summary').catch(() => null),
-        api.get('/nurse/congestion/chart').catch(() => [])
+        api.get('/admin/congestion/summary').catch(() => null),
+        api.get('/admin/congestion/chart').catch(() => [])
       ]);
       setData(congestionRes);
       setChartData(chartRes.data || []);

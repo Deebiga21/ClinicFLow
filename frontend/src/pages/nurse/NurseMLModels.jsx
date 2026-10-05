@@ -14,7 +14,7 @@ export default function NurseMLModels() {
 
   const fetchData = async () => {
     try {
-      const res = await api.get('/nurse/ml-models').catch(() => []);
+      const res = await api.get('/admin/ml-models').catch(() => []);
       const data = Array.isArray(res) ? res : (res.data || []);
       setModels(data);
       if (data.length > 0 && !selectedModel) {

@@ -31,8 +31,23 @@ export default function PatientLayout() {
   const [toast, setToast] = useState(null);
   
   useEffect(() => {
-    if (lastEvent?.event === 'patient_called' && lastEvent?.data?.patient_id === patientId) {
-      setToast("Your turn � The doctor is ready for your consultation.");
+    if (
+      ['patient_called', 'NURSE_PREPARATION_STARTED', 'PATIENT_READY', 'PATIENT_SENT_TO_DOCTOR'].includes(lastEvent?.event) && 
+      lastEvent?.data?.patient_id === patientId
+    ) {
+      let msg = "Your turn — The doctor is ready for your consultation.";
+      let title = "🔔 YOUR TURN";
+      if (lastEvent.event === 'NURSE_PREPARATION_STARTED') {
+         title = "🔔 NURSE PREPARATION";
+         msg = "Please proceed to the Nurse Station for vitals and preparation.";
+      } else if (lastEvent.event === 'PATIENT_READY') {
+         title = "⏳ READY";
+         msg = "Your preparation is complete. The doctor will see you shortly.";
+      } else if (lastEvent.event === 'PATIENT_SENT_TO_DOCTOR') {
+         title = "🩺 DOCTOR IS READY";
+         msg = "Please proceed to the doctor's consultation room.";
+      }
+      setToast({ title, message: msg, bgColor: "bg-blue-600" });
       setTimeout(() => setToast(null), 10000);
     }
   }, [lastEvent, patientId]);
@@ -110,8 +125,9 @@ export default function PatientLayout() {
         
         
         {toast && (
-          <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce font-bold">
-            {toast}
+          <div className={`fixed top-4 right-4 ${toast.bgColor || 'bg-blue-600'} text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce`}>
+             <h4 className="font-black text-lg mb-1">{toast.title || 'Notification'}</h4>
+             <p className="text-sm font-medium">{toast.message || toast}</p>
           </div>
         )}
         <main className="flex-1 overflow-y-auto">
@@ -123,3 +139,5 @@ export default function PatientLayout() {
     </div>
   );
 }
+
+

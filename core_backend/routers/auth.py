@@ -59,12 +59,17 @@ def login(data: dict, db: Session = Depends(get_db)):
     phone = data.get("phone")
     password = data.get("password")
     
+    if email: email = email.lower().strip()
+    if phone: phone = phone.lower().strip()
+    if password: password = password.strip()
+    
     user = None
     if email:
         user = db.query(User).filter(User.email == email, User.password_hash == password).first()
     elif phone:
         user = db.query(User).filter(User.phone == phone, User.password_hash == password).first()
         
+    print(f"DEBUG USER: {user}")
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
         

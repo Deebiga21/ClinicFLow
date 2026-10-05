@@ -21,9 +21,9 @@ export default function NurseDoctorWorkload() {
   const fetchData = async () => {
     try {
       const [summaryRes, doctorsRes, chartRes] = await Promise.all([
-        api.get('/nurse/workload/summary').catch(() => null),
-        api.get('/nurse/workload/doctors').catch(() => []),
-        api.get('/nurse/workload/chart').catch(() => [])
+        api.get('/admin/workload/summary').catch(() => null),
+        api.get('/admin/workload/doctors').catch(() => []),
+        api.get('/admin/workload/chart').catch(() => [])
       ]);
       setSummary(summaryRes);
       setDoctors(doctorsRes.data || []);

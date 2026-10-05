@@ -23,7 +23,7 @@ def get_nurse_dashboard():
             JOIN patients p ON q.patient_id = p.id
             JOIN appointments a ON q.appointment_id = a.id
             JOIN doctors d ON q.doctor_id = d.id
-            WHERE q.status IN ('Waiting', 'In Consultation')
+            WHERE q.status IN ('Waiting', 'With Nurse', 'Ready', 'With Doctor', 'In Consultation')
             ORDER BY q.queue_position
         """)).mappings().all()
         live_queue = [dict(q) for q in q_rows]
@@ -83,3 +83,31 @@ def get_nurse_dashboard():
             "upcoming_appointments": [],
             "medicine_alerts": [dict(m) for m in meds]
         }
+
+@router.get('/notifications')
+def get_nurse_notifications():
+    return {'data': []}
+
+@router.put('/notifications/{id}/read')
+def mark_notification_read(id: str):
+    return {'status': 'success'}
+
+@router.get('/reports')
+def get_reports():
+    return {'data': []}
+
+@router.post('/generate-report')
+def generate_report(req: dict):
+    return {'status': 'success'}
+
+@router.get('/settings')
+def get_settings():
+    return {'data': {'notifications_enabled': True}}
+
+@router.put('/settings')
+def update_settings(req: dict):
+    return {'status': 'success'}
+
+@router.get('/system-status')
+def get_system_status():
+    return {'data': {'status': 'operational'}}

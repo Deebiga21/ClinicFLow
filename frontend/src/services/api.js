@@ -42,7 +42,7 @@ export const api = {
   post: (url, data, options = {}) => fetchWithHandler(url, { method: 'POST', body: JSON.stringify(data), ...options }),
 
   // Admin Dashboard
-  getDashboardOverview: () => fetchWithHandler('/admin/dashboard'),
+  getDashboardOverview: () => fetchWithHandler('/nurse/dashboard'),
   
   // Patient Portal
   getPatientDashboard: (patientId) => fetchWithHandler(`/patient/dashboard/${patientId}`),
@@ -90,23 +90,24 @@ export const api = {
   getMedicineDemandForecast: () => fetchWithHandler('/medicines/demand-forecast'),
 
   // Reports
-  getReports: () => fetchWithHandler('/reports'),
-  generateReport: (data) => fetchWithHandler('/reports/generate', {
+  getReports: () => fetchWithHandler('/nurse/reports'),
+  generateReport: (data) => fetchWithHandler('/nurse/generate-report', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
 
   // Notifications (Admin)
-  getAdminNotifications: () => fetchWithHandler('/notifications/admin'),
-  markNotificationRead: (id) => fetchWithHandler(`/notifications/${id}/read`, { method: 'POST' }),
+  getNurseNotifications: () => fetchWithHandler('/nurse/notifications'),
+  getAdminNotifications: () => fetchWithHandler('/admin/notifications/admin'),
+  markNotificationRead: (id) => fetchWithHandler(`/admin/notifications/${id}/read`, { method: 'POST' }),
 
   // Settings & System
-  getSettings: () => fetchWithHandler('/settings'),
-  updateSettings: (data) => fetchWithHandler('/settings', {
+  getSettings: () => fetchWithHandler('/nurse/settings'),
+  updateSettings: (data) => fetchWithHandler('/nurse/settings', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
-  getSystemStatus: () => fetchWithHandler('/system/status'),
+  getSystemStatus: () => fetchWithHandler('/nurse/system-status'),
 
   // New Endpoints for Admin Pages
   getExplainabilityData: (modelId) => fetchWithHandler(`/admin/explainability/${modelId}`),

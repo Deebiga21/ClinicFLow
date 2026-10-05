@@ -8,6 +8,10 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 // Layouts
+import NurseDashboard from './pages/NurseDashboard';
+import Appointments from './pages/Appointments';
+import StaffChat from './pages/StaffChat';
+import Assistant from './pages/Assistant';
 import NurseLayout from './components/nurse/NurseLayout';
 import PatientLayout from './components/patient/PatientLayout';
 
@@ -47,6 +51,7 @@ import PatientMedications from './pages/patient/PatientMedications';
 import PatientNotifications from './pages/patient/PatientNotifications';
 import PatientProfile from './pages/patient/PatientProfile';
 
+
 function RoleRedirect() {
   const { user } = useAuth();
   if (!user) return <Landing />;
@@ -68,6 +73,13 @@ export default function App() {
               {/* Admin Routes */}
               <Route path="/nurse" element={<NurseLayout />}>
                 <Route index element={<NurseCommandCenter />} />
+                <Route path="live-queue" element={<NurseDashboard />} />
+                <Route path="appointments" element={<Appointments />} />
+                <Route path="patients" element={<ReceptionistScreen />} />
+                <Route path="patient-preparation" element={<NurseDashboard />} />
+                <Route path="chat" element={<StaffChat />} />
+                <Route path="assistant" element={<Assistant />} />
+
                 <Route path="patient-flow" element={<NursePatientFlow />} />
                 <Route path="doctor-workload" element={<NurseDoctorWorkload />} />
                 <Route path="congestion" element={<NurseCongestion />} />

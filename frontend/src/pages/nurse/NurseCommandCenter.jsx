@@ -21,7 +21,7 @@ export default function NurseCommandCenter() {
       try {
         const [overviewResult, mlResult] = await Promise.all([
           api.getDashboardOverview(),
-          api.get('/nurse/ml-models').catch(() => [])
+          api.get('/admin/ml-models').catch(() => [])
         ]);
         setData(overviewResult);
         setMlModels(mlResult || []);

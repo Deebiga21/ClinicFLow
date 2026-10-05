@@ -61,3 +61,31 @@ def digital_twin_current():
 @router.post("/digital-twin/simulate")
 def digital_twin_simulate():
     return {"data": None}
+
+@router.get('/reports')
+def get_reports():
+    return {'data': []}
+
+@router.post('/reports')
+def generate_report():
+    return {'status': 'success'}
+
+@router.get('/settings')
+def get_settings():
+    return {'data': {'notifications_enabled': True}}
+
+@router.put('/settings')
+def update_settings(req: dict):
+    return {'status': 'success'}
+
+@router.get('/system/status')
+def get_system_status():
+    return {'data': {'status': 'operational', 'uptime': '99.9%'}}
+
+@router.get('/notifications/admin')
+def get_admin_notifications():
+    return {'data': []}
+
+@router.post('/notifications/{id}/read')
+def mark_admin_notification_read(id: str):
+    return {'status': 'success'}

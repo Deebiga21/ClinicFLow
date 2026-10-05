@@ -142,15 +142,28 @@ class CallNextRequest(BaseModel):
 
 @router.post("/api/queue/call-next")
 def call_next(req: CallNextRequest):
+    called_patient_id = None
     with orchestrator.Session() as session:
         # Complete current if any
         session.execute(text("UPDATE queue_entries SET status = 'Completed', consultation_completed_at = CURRENT_TIMESTAMP WHERE doctor_id = :did AND status = 'In Consultation'"), {"did": req.doctor_id})
         # Find next
-        next_entry = session.execute(text("SELECT id FROM queue_entries WHERE doctor_id = :did AND status = 'Waiting' ORDER BY queue_position ASC LIMIT 1"), {"did": req.doctor_id}).fetchone()
+        next_entry = session.execute(text("SELECT id, patient_id FROM queue_entries WHERE doctor_id = :did AND status = 'Waiting' ORDER BY queue_position ASC LIMIT 1"), {"did": req.doctor_id}).fetchone()
         if next_entry:
+            called_patient_id = next_entry[1]
             session.execute(text("UPDATE queue_entries SET status = 'In Consultation', consultation_started_at = CURRENT_TIMESTAMP WHERE id = :id"), {"id": next_entry[0]})
         session.commit()
-    return {"ok": True}
+        
+    if called_patient_id:
+        import asyncio
+        from main import manager, sio
+        try:
+            loop = asyncio.get_event_loop()
+            loop.create_task(sio.emit('systemBroadcast', {"event": "patient_called", "patient_id": called_patient_id}))
+            loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "patient_called", "patient_id": called_patient_id}}))
+        except Exception as e:
+            pass
+
+    return {"ok": True, "patient_called": called_patient_id}
 
 
 @router.post("/api/doctors/seed")
@@ -204,8 +217,26 @@ def create_appointment(req: AppointmentCreate):
             INSERT INTO appointments (id, patient_id, doctor_id, appointment_date, appointment_time, status, created_at)
             VALUES (:id, :pid, :did, :date, :time, 'Scheduled', CURRENT_TIMESTAMP)
         """), {"id": a_id, "pid": p_id, "did": d_id, "date": req.date, "time": req.time})
+        
+        # Add to patient journey
+        journey_id = str(uuid.uuid4())
+        session.execute(text("""
+            INSERT INTO patient_journeys (id, patient_id, appointment_id, current_stage, stage_started_at, status, created_at)
+            VALUES (:id, :pid, :aid, 'BOOKED', CURRENT_TIMESTAMP, 'Active', CURRENT_TIMESTAMP)
+        """), {"id": journey_id, "pid": p_id, "aid": a_id})
+        
         session.commit()
     
+    # Broadcast to update dashboard
+    import asyncio
+    from main import manager, sio
+    try:
+        loop = asyncio.get_event_loop()
+        loop.create_task(sio.emit('systemBroadcast', {"event": "appointment_created", "patient_id": p_id}))
+        loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "appointment_created", "patient_id": p_id}}))
+    except Exception as e:
+        pass
+
     return {"id": a_id, "status": "Scheduled"}
 
 @router.put("/api/appointments/{id}")
@@ -242,10 +273,11 @@ class VisitCreate(BaseModel):
 @router.post('/api/visits')
 def save_visit(req: VisitCreate):
     with orchestrator.Session() as session:
-        q = session.execute(text("SELECT id, patient_id FROM queue_entries WHERE doctor_id = :did AND status = 'In Consultation'"), {'did': req.doctorId}).fetchone()
+        q = session.execute(text("SELECT id, patient_id, appointment_id FROM queue_entries WHERE doctor_id = :did AND status = 'In Consultation'"), {'did': req.doctorId}).fetchone()
         if q:
             queue_id = q[0]
             patient_id = q[1]
+            app_id = q[2]
             pres_id = str(uuid.uuid4())
             meds_json = json.dumps(req.prescription)
             
@@ -261,7 +293,7 @@ def save_visit(req: VisitCreate):
                     INSERT INTO prescriptions (id, patient_id, appointment_id, doctor_id, consultation_id, medicine_name, dosage, frequency, duration_days, instructions, prescribed_at, status)
                     VALUES (:id, :pat, :app, :doc, :cons, :mname, :dos, :freq, :dur, :inst, CURRENT_TIMESTAMP, 'Active')
                 '''), {
-                    'id': str(uuid.uuid4()), 'pat': patient_id, 'app': 'UNKNOWN', 'doc': req.doctorId, 'cons': queue_id,
+                    'id': str(uuid.uuid4()), 'pat': patient_id, 'app': app_id, 'doc': req.doctorId, 'cons': queue_id,
                     'mname': drug_name, 'dos': rx.get('dosage', ''), 'freq': rx.get('frequency', ''), 'dur': rx.get('duration', ''),
                     'inst': req.notes
                 })
@@ -288,18 +320,36 @@ def save_visit(req: VisitCreate):
                         tx_id = str(uuid.uuid4())
                         session.execute(text('''
                             INSERT INTO inventory_transactions (id, medicine_id, batch_id, transaction_type, quantity, reference_type, reference_id, timestamp)
-                            VALUES (:tid, :mid, :bid, 'Dispense', 1, 'Prescription', 'UNKNOWN', CURRENT_TIMESTAMP)
+                            VALUES (:tid, :mid, :bid, 'Dispense', 1, 'Prescription', app_id, CURRENT_TIMESTAMP)
                         '''), {
                             'tid': tx_id,
                             'mid': med_id,
                             'bid': batch[0]
                         })
 
+            # Create Notifications
+            session.execute(text("INSERT INTO notifications (id, patient_id, notification_type, title, message, is_read, created_at) VALUES (:id, :pid, 'prescription', '🔔 New Prescription', 'Your doctor has added a prescription for today''s visit.', 0, CURRENT_TIMESTAMP)"), {"id": str(uuid.uuid4()), "pid": patient_id})
+            session.execute(text("INSERT INTO notifications (id, patient_id, notification_type, title, message, is_read, created_at) VALUES (:id, :pid, 'medication', '💊 Medication Schedule Ready', 'Your medication schedule has been added.', 0, CURRENT_TIMESTAMP)"), {"id": str(uuid.uuid4()), "pid": patient_id})
+            
             # 3. Complete queue
             if req.status == 'done':
                 session.execute(text("UPDATE queue_entries SET status = 'Completed', consultation_completed_at = CURRENT_TIMESTAMP WHERE id = :id"), {'id': queue_id})
                 
+                # Update Journey to Completed
+                session.execute(text("UPDATE patient_journeys SET current_stage = 'COMPLETED', status = 'Completed', stage_completed_at = CURRENT_TIMESTAMP WHERE appointment_id = :aid"), {'aid': app_id})
+                
             session.commit()
+            
+            # Broadcast to update dashboard
+            import asyncio
+            from main import manager, sio
+            try:
+                loop = asyncio.get_event_loop()
+                loop.create_task(sio.emit('systemBroadcast', {"event": "consultation_completed", "patient_id": patient_id}))
+                loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "consultation_completed", "patient_id": patient_id}}))
+            except Exception as e:
+                pass
+
             return {'status': 'success'}
         return {'status': 'error', 'message': 'No active consultation found'}
 
@@ -337,3 +387,86 @@ def get_doctors_availability():
         })
         
     return {"data": res}
+
+class BillCreate(BaseModel):
+    patient_id: str
+    appointment_id: str
+    amount: float
+
+@router.post("/api/bills")
+def create_bill(req: BillCreate):
+    with orchestrator.Session() as session:
+        bill_id = str(uuid.uuid4())
+        session.execute(text("""
+            INSERT INTO bills (id, patient_id, appointment_id, total_amount, status, created_at)
+            VALUES (:id, :pid, :aid, :amt, 'Pending', CURRENT_TIMESTAMP)
+        """), {"id": bill_id, "pid": req.patient_id, "aid": req.appointment_id, "amt": req.amount})
+        
+        # Also create a notification for the patient
+        notif_id = str(uuid.uuid4())
+        session.execute(text("""
+            INSERT INTO notifications (id, patient_id, notification_type, title, message, is_read, created_at)
+            VALUES (:id, :pid, 'bill', '💳 BILL READY', 'Your clinic bill is ready for ₹' || :amt, 0, CURRENT_TIMESTAMP)
+        """), {"id": notif_id, "pid": req.patient_id, "amt": req.amount})
+        
+        session.commit()
+        
+        import asyncio
+        from main import manager, sio
+        try:
+            loop = asyncio.get_event_loop()
+            loop.create_task(sio.emit('systemBroadcast', {"event": "bill_generated", "patient_id": req.patient_id}))
+            loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "bill_generated", "patient_id": req.patient_id}}))
+        except Exception:
+            pass
+
+    return {"id": bill_id, "status": "Pending"}
+
+@router.get("/api/bills/{patient_id}")
+def get_bills(patient_id: str):
+    with orchestrator.Session() as session:
+        bills = session.execute(text("SELECT * FROM bills WHERE patient_id = :pid ORDER BY created_at DESC"), {"pid": patient_id}).mappings().all()
+        return [dict(b) for b in bills]
+
+@router.post("/api/payments")
+def create_payment(req: dict):
+    with orchestrator.Session() as session:
+        payment_id = str(uuid.uuid4())
+        bill_id = req.get("bill_id")
+        patient_id = req.get("patient_id")
+        amount = req.get("amount")
+        
+        # Mark bill as paid
+        session.execute(text("UPDATE bills SET status = 'Paid' WHERE id = :bid"), {"bid": bill_id})
+        
+        # Create payment record
+        session.execute(text("""
+            INSERT INTO payments (id, patient_id, bill_id, amount, payment_status, payment_method, created_at)
+            VALUES (:id, :pid, :bid, :amt, 'PAID', 'QR', CURRENT_TIMESTAMP)
+        """), {"id": payment_id, "pid": patient_id, "bid": bill_id, "amt": amount})
+        
+        # Notification
+        notif_id = str(uuid.uuid4())
+        session.execute(text("""
+            INSERT INTO notifications (id, patient_id, notification_type, title, message, is_read, created_at)
+            VALUES (:id, :pid, 'payment', '✓ PAYMENT SUCCESSFUL', 'Payment of ₹' || :amt || ' received successfully.', 0, CURRENT_TIMESTAMP)
+        """), {"id": notif_id, "pid": patient_id, "amt": amount})
+        
+        session.commit()
+        
+        import asyncio
+        from main import manager, sio
+        try:
+            loop = asyncio.get_event_loop()
+            loop.create_task(sio.emit('systemBroadcast', {"event": "payment_successful", "patient_id": patient_id}))
+            loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "payment_successful", "patient_id": patient_id}}))
+        except Exception:
+            pass
+            
+    return {"id": payment_id, "status": "PAID"}
+
+@router.get("/api/payments/{patient_id}")
+def get_payments(patient_id: str):
+    with orchestrator.Session() as session:
+        payments = session.execute(text("SELECT * FROM payments WHERE patient_id = :pid ORDER BY created_at DESC"), {"pid": patient_id}).mappings().all()
+        return [dict(p) for p in payments]

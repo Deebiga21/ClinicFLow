@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, User, CheckCircle, FileText,  } from 'lucide-react';
+import { X, Calendar, User, CheckCircle, FileText } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 // API helper
 const API_BASE = 'http://localhost:8000/api';
@@ -7,13 +8,14 @@ const API_BASE = 'http://localhost:8000/api';
 export default function BookingWizard({ isOpen, onClose, patientId, onComplete }) {
   const [step, setStep] = useState(1);
   const [doctors, setDoctors] = useState([]);
+  
   const [loading, setLoading] = useState(false);
   const [appointmentDetails, setAppointmentDetails] = useState(null);
   
   const [formData, setFormData] = useState({
-    name: 'John Doe', // default
+    name: 'Deepika', // prefilled from login Ideally
     dob: '1990-01-01',
-    phone: '',
+    phone: '1234567890',
     email: '',
     reason: '',
     doctor_id: '',
@@ -51,10 +53,10 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          patient_id: patientId || 'P_1234',
+          patient_id: patientId,
           doctor_id: formData.doctor_id,
-          appointment_date: formData.appointment_date,
-          appointment_time: formData.appointment_time,
+          date: formData.appointment_date,
+          time: formData.appointment_time,
           appointment_type: formData.appointment_type,
           patient_name: formData.name,
           doctor_name: doctors.find(d => d.id === formData.doctor_id)?.name
@@ -63,6 +65,7 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
       const data = await res.json();
       setAppointmentDetails(data);
       setStep(3); // Go to Letter
+      if(onComplete) onComplete();
     } catch (e) {
       console.error(e);
     } finally {
@@ -70,7 +73,6 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
     }
   };
 
-  
   if (!isOpen) return null;
 
   return (
@@ -87,10 +89,6 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
               <span className={`text-xs font-semibold ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>2. Review</span>
               <span className="text-gray-300">›</span>
               <span className={`text-xs font-semibold ${step >= 3 ? 'text-blue-600' : 'text-gray-400'}`}>3. Letter</span>
-              <span className="text-gray-300">›</span>
-              <span className={`text-xs font-semibold ${step >= 4 ? 'text-blue-600' : 'text-gray-400'}`}>4. Payment</span>
-              <span className="text-gray-300">›</span>
-              <span className={`text-xs font-semibold ${step >= 5 ? 'text-blue-600' : 'text-gray-400'}`}>5. Token</span>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
@@ -198,39 +196,24 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
                   <p><strong>Appt ID:</strong> {appointmentDetails.id}</p>
                 </div>
               </div>
-
-              <div className="mt-8 bg-gray-50 p-4 rounded text-xs text-gray-600 border border-gray-200">
-                <p className="font-bold mb-2">Instructions:</p>
-                <ul className="list-disc pl-4 space-y-1">
-                  <li>Please arrive 15 minutes before the appointment time.</li>
-                  
-                  <li>Carry any previous reports or referral documents.</li>
-                </ul>
+              
+              <div className="mt-8 flex justify-center">
+                <QRCodeSVG value={appointmentDetails.id} size={120} />
               </div>
-            </div>
-          )}
 
-          
-
-          {step === 4 && appointmentDetails?.token && (
-            <div className="max-w-md mx-auto text-center">
-              <div className="bg-white p-8 rounded-xl border-2 border-blue-100 shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10"></div>
-                <p className="text-xs font-bold text-blue-600 tracking-widest uppercase mb-2">YOUR TOKEN</p>
-                <h1 className="text-6xl font-black text-[#0A2540] mb-6">{appointmentDetails.token}</h1>
-                
-                <p className="text-sm text-gray-500 mb-2">Please watch the live queue monitor for your token to be called.</p>
-                
-                <button 
+              <div className="mt-8 bg-gray-50 p-4 rounded text-xs text-gray-600 border border-gray-200 text-center">
+                <p className="font-bold mb-2">Instructions:</p>
+                <p>Scan this QR code at the clinic kiosk to check in and generate your queue token.</p>
+              </div>
+              
+              <button 
                   onClick={() => {
                     onClose();
-                    if (onComplete) onComplete();
                   }}
                   className="mt-6 w-full bg-[#0A2540] text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors"
                 >
-                  Return to Dashboard
-                </button>
-              </div>
+                  ADD TO MY VISIT & CLOSE
+              </button>
             </div>
           )}
 
@@ -242,11 +225,6 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
             <button onClick={onClose} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-50 rounded-lg">Cancel</button>
             {step === 1 && <button onClick={() => setStep(2)} disabled={!formData.doctor_id || !formData.appointment_date} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg disabled:opacity-50">Continue</button>}
             {step === 2 && <button onClick={handleBook} disabled={loading} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg disabled:opacity-50">{loading ? 'Booking...' : 'Confirm Appointment'}</button>}
-          </div>
-        )}
-        {step === 3 && (
-          <div className="px-6 py-4 border-t border-gray-100 bg-white flex justify-end gap-3">
-            <button onClick={() => setStep(4)} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg">View Token</button>
           </div>
         )}
       </div>

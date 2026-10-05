@@ -22,6 +22,21 @@ def get_patient_dashboard(patient_id: str):
         upcoming = session.execute(text(
             "SELECT * FROM appointments WHERE patient_id = :patient_id AND status = 'Scheduled'"
         ), {"patient_id": patient_id}).mappings().all()
+        
+        live_queue = None
+        if visit_status.get("queue_status") and visit_status.get("appointment"):
+            doctor_id = visit_status["appointment"].get("doctor_id")
+            if doctor_id:
+                # Get currently serving
+                current = session.execute(text("SELECT token_number FROM queue_entries WHERE doctor_id = :did AND status IN ('In Consultation', 'With Nurse', 'Ready', 'With Doctor') LIMIT 1"), {"did": doctor_id}).scalar()
+                
+                # Get next
+                next_token = session.execute(text("SELECT token_number FROM queue_entries WHERE doctor_id = :did AND status = 'Waiting' ORDER BY queue_position ASC LIMIT 1"), {"did": doctor_id}).scalar()
+                
+                live_queue = {
+                    "current": current if current else None,
+                    "next": next_token if next_token else None
+                }
 
         return {
             "patient": dict(patient),
@@ -34,7 +49,8 @@ def get_patient_dashboard(patient_id: str):
             "next_expected_event": {"event": "Consultation", "time": "Soon"} if visit_status.get("queue_status") and visit_status.get("queue_status").get('status') == 'Waiting' else None,
             "medication_summary": medications,
             "upcoming_appointments": [dict(u) for u in upcoming],
-            "notifications": []
+            "notifications": [],
+            "live_queue": live_queue
         }
 
 @router.get("/api/patient/{patient_id}/visit-status")
