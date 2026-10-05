@@ -105,10 +105,10 @@ export default function ReceptionistScreen() {
     finally { setSubmitting(false); }
   }
 
-  async function handle(path) {
+  async function handle(path, body = null) {
     if (actionPending) return;
     setActionPending(true);
-    try { await call(path, { method: 'POST' }); }
+    try { await call(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined }); }
     catch (err) { alert(err.message); }
     finally { setActionPending(false); }
   }
@@ -383,11 +383,11 @@ export default function ReceptionistScreen() {
             </AnimatePresence>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <button className="btn btn--accent" style={{ flex: 1 }} onClick={() => handle('/queue/call-next')}
+              <button className="btn btn--accent" style={{ flex: 1 }} onClick={() => handle('/queue/call-next', { doctor_id: 'D_001' })}
                 disabled={actionPending || (waiting.length === 0 && !current)}>
                 <PhoneCall size={16} style={{ marginRight: 6, verticalAlign: -3 }} /> Call next
               </button>
-              <button className="btn btn--ghost" onClick={() => handle('/queue/skip')} disabled={actionPending || !current}>
+              <button className="btn btn--ghost" onClick={() => handle('/queue/skip', { doctor_id: 'D_001' })} disabled={actionPending || !current}>
                 <SkipForward size={16} />
               </button>
             </div>

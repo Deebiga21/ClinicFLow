@@ -42,7 +42,7 @@ export const api = {
   post: (url, data, options = {}) => fetchWithHandler(url, { method: 'POST', body: JSON.stringify(data), ...options }),
 
   // Admin Dashboard
-  getDashboardOverview: () => fetchWithHandler('/nurse/dashboard'),
+  getDashboardOverview: () => fetchWithHandler('/admin/dashboard'),
   
   // Patient Portal
   getPatientDashboard: (patientId) => fetchWithHandler(`/patient/dashboard/${patientId}`),
