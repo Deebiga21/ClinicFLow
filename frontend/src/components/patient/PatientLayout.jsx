@@ -16,7 +16,7 @@ export default function PatientLayout() {
   const location = useLocation();
   const [bookingOpen, setBookingOpen] = React.useState(false);
   const { user } = useAuth();
-  const [patientId, setPatientId] = useState(user?.patient_id || 'P_demo_1');
+  const [patientId, setPatientId] = useState(user?.patient_id || 'P_1');
 
   // Sync patientId if user changes
   useEffect(() => {
