@@ -15,6 +15,14 @@ export default function PatientProfile() {
     );
   }
 
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    email: data?.patient?.email || '',
+    phone: data?.patient?.phone || '',
+    age: data?.patient?.age || '',
+    gender: data?.patient?.gender || ''
+  });
+
   const patient = data?.patient;
 
   if (!patient) return (
@@ -25,14 +33,6 @@ export default function PatientProfile() {
       </div>
     </div>
   );
-
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [formData, setFormData] = React.useState({
-    email: patient.email || '',
-    phone: patient.phone || '',
-    age: patient.age || '',
-    gender: patient.gender || ''
-  });
 
   const handleSave = () => {
     // In a real app, you would make an API call here.

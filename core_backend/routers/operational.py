@@ -57,7 +57,7 @@ def get_live_queue():
         # Get active queue items
         query = """
             SELECT q.id, q.patient_id, p.name as patient_name, q.doctor_id, d.name as doctor_name, 
-                   q.status, a.token_status, q.queue_position 
+                   q.status, q.token_number, q.queue_position 
             FROM queue_entries q
             JOIN patients p ON q.patient_id = p.id
             JOIN doctors d ON q.doctor_id = d.id
@@ -72,7 +72,7 @@ def get_live_queue():
             # simple mock wait time for the view based on pos
             res.append({
                 "id": r["id"],
-                "token": r["token_status"] if r["token_status"] and r["token_status"] != 'Pending' else f"A-{r['queue_position']}",
+                "token": str(r["token_number"]) if r["token_number"] else f"A-{r['queue_position']}",
                 "patient_name": r["patient_name"],
                 "doctor_id": r["doctor_id"],
                 "doctor_name": r["doctor_name"],
