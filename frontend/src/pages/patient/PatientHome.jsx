@@ -4,6 +4,7 @@ import {
   User, Clock, CheckCircle2, QrCode, 
   MapPin, Calendar, Pill, Navigation, Activity, X
 } from 'lucide-react';
+import { api } from '../../services/api';
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function PatientHome() {
@@ -12,6 +13,21 @@ export default function PatientHome() {
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [checkInSuccess, setCheckInSuccess] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [updatingMed, setUpdatingMed] = useState({});
+
+  
+  const handleMarkTaken = async (scheduleId) => {
+    if (updatingMed[scheduleId]) return;
+    setUpdatingMed(prev => ({ ...prev, [scheduleId]: true }));
+    try {
+      await api.post(`/medication-schedules/${scheduleId}/taken`);
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to mark as taken');
+      setUpdatingMed(prev => ({ ...prev, [scheduleId]: false }));
+    }
+  };
 
   const handleQRClick = async () => {
     if (!data?.today_appointment?.id || data?.queue_status || isCheckingIn || checkInSuccess) return;
@@ -66,7 +82,7 @@ export default function PatientHome() {
 
   const allSchedules = [];
   medication_summary.forEach(rx => {
-    rx.schedules.forEach(s => {
+    (rx.schedules || []).forEach(s => {
       allSchedules.push({ ...s, medicine_name: rx.medicine_name, dosage: rx.dosage });
     });
   });
@@ -395,9 +411,20 @@ export default function PatientHome() {
               ) : allSchedules.slice(0, 3).map((med, i) => (
                 <div key={i} className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                   <div className="flex items-start gap-3">
-                     <div className={`mt-0.5 rounded-full p-1 ${med.status === 'Taken' ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-400'}`}>
-                        <CheckCircle2 size={16} />
-                     </div>
+                     {med.status === 'Taken' ? (
+                        <div className="mt-0.5 rounded-full p-1 bg-green-100 text-green-600 cursor-default">
+                          <CheckCircle2 size={16} />
+                        </div>
+                     ) : (
+                        <button 
+                          disabled={updatingMed[med.id]}
+                          onClick={() => handleMarkTaken(med.id)}
+                          title="Click to mark as taken"
+                          className="mt-0.5 rounded-full p-1 bg-blue-50 hover:bg-blue-200 text-blue-500 hover:text-blue-700 transition-colors cursor-pointer"
+                        >
+                          <CheckCircle2 size={16} />
+                        </button>
+                     )}
                      <div>
                        <p className="text-sm font-bold text-[#0A2540]">{med.medicine_name} <span className="text-gray-500 font-normal">{med.dosage}</span></p>
                        <div className="flex items-center gap-2 mt-0.5">

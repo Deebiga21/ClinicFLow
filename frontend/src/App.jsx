@@ -50,6 +50,7 @@ import PatientPrescriptions from './pages/patient/PatientPrescriptions';
 import PatientMedications from './pages/patient/PatientMedications';
 import PatientNotifications from './pages/patient/PatientNotifications';
 import PatientProfile from './pages/patient/PatientProfile';
+import PatientChat from './pages/patient/PatientChat';
 
 
 function RoleRedirect() {
@@ -114,6 +115,7 @@ export default function App() {
                 <Route path="medications" element={<PatientMedications />} />
                 <Route path="notifications" element={<PatientNotifications />} />
                 <Route path="profile" element={<PatientProfile />} />
+                <Route path="chat" element={<PatientChat />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

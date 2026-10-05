@@ -29,7 +29,7 @@ export function useChat(channelId) {
 
   // Listen for websocket chat events
   useEffect(() => {
-    if (lastEvent?.type === 'chat_message' && lastEvent.data?.channel === channelId) {
+    if ((lastEvent?.type === 'chat_message' || lastEvent?.type === 'chat_message_created') && lastEvent.data?.channel === channelId) {
       const msg = lastEvent.data;
       setMessages(prev => {
         if (prev.some(existing => existing.id === msg.id)) return prev;

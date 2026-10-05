@@ -64,7 +64,17 @@ class PatientService:
                 "SELECT * FROM prescriptions WHERE patient_id = :patient_id ORDER BY prescribed_at DESC"
             ), {"patient_id": patient_id}).mappings().all()
 
-            return [dict(p) for p in prescriptions]
+            schedules = session.execute(text(
+                "SELECT * FROM medication_schedules WHERE patient_id = :patient_id ORDER BY scheduled_time ASC"
+            ), {"patient_id": patient_id}).mappings().all()
+
+            results = []
+            for p in prescriptions:
+                p_dict = dict(p)
+                p_dict['schedules'] = [dict(s) for s in schedules if s['prescription_id'] == p['id']]
+                results.append(p_dict)
+
+            return results
 
     def get_wait_explanation(self, patient_id: str):
         with self.Session() as session:

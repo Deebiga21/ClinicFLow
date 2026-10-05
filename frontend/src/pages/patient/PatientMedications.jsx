@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import EmptyState from '../../components/shared/EmptyState';
-import { Pill, RefreshCw } from 'lucide-react';
+import { Pill, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { api } from '../../services/api';
 
 export default function PatientMedications() {
   const { data, loading } = useOutletContext();
+  const [updating, setUpdating] = useState({});
 
   if (loading) {
     return (
@@ -16,6 +18,20 @@ export default function PatientMedications() {
   }
 
   const medications = data?.medication_summary || [];
+
+  const handleMarkTaken = async (scheduleId) => {
+    if (updating[scheduleId]) return;
+    setUpdating(prev => ({ ...prev, [scheduleId]: true }));
+    try {
+      await api.post(`/medication-schedules/${scheduleId}/taken`);
+      // Optimistically reload or wait for next poll
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to mark as taken');
+      setUpdating(prev => ({ ...prev, [scheduleId]: false }));
+    }
+  };
 
   if (medications.length === 0) return (
     <div className="p-6 h-full flex flex-col">
@@ -55,9 +71,24 @@ export default function PatientMedications() {
                 {med.schedules && med.schedules.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {med.schedules.map((s, idx) => (
-                      <div key={idx} className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center">
-                        <div className="text-sm font-semibold text-slate-700">{s.scheduled_time || 'Pending'}</div>
-                        <div className="text-xs text-slate-500 mt-1">{s.scheduled_date || 'Daily'}</div>
+                      <div key={idx} className={`border rounded-lg p-3 flex flex-col justify-between ${s.status === 'Taken' ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-100'}`}>
+                        <div className="text-center mb-2">
+                          <div className={`text-sm font-semibold ${s.status === 'Taken' ? 'text-green-800 line-through opacity-70' : 'text-slate-700'}`}>{s.scheduled_time || 'Pending'}</div>
+                          <div className="text-xs text-slate-500 mt-1">{s.scheduled_date || 'Daily'}</div>
+                        </div>
+                        {s.status !== 'Taken' ? (
+                          <button 
+                            disabled={updating[s.id]}
+                            onClick={() => handleMarkTaken(s.id)}
+                            className="flex items-center justify-center w-full gap-1 py-1.5 px-2 bg-white hover:bg-blue-50 text-blue-600 text-xs font-semibold rounded border border-blue-200 transition-colors"
+                          >
+                            <CheckCircle2 size={14} /> {updating[s.id] ? 'Saving...' : 'Mark Taken'}
+                          </button>
+                        ) : (
+                          <div className="flex items-center justify-center gap-1 py-1.5 px-2 text-green-600 text-xs font-bold bg-green-100 rounded">
+                            <CheckCircle2 size={14} /> Taken
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

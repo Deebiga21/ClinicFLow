@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { 
-  Home, Clock, Map, Calendar, Pill, FileText, Bell, User
+  Home, Clock, Map, Calendar, Pill, FileText, Bell, User, MessageCircle
 } from 'lucide-react';
 import Sidebar from '../shared/Sidebar';
 import Header from '../shared/Header';
@@ -98,7 +98,8 @@ export default function PatientLayout() {
       title: 'ACCOUNT',
       links: [
         { to: '/patient/notifications', icon: Bell, label: 'NOTIFICATIONS' },
-        { to: '/patient/profile', icon: User, label: 'PROFILE' }
+        { to: '/patient/profile', icon: User, label: 'PROFILE' },
+        { to: '/patient/chat', icon: MessageCircle, label: 'NURSE CHAT' }
       ]
     }
   ];
@@ -112,6 +113,7 @@ export default function PatientLayout() {
     '/patient/medications': { title: 'My Medication Schedule', sub: 'Your active medicine plan' },
     '/patient/notifications': { title: 'Notifications', sub: 'Important updates for your care' },
     '/patient/profile': { title: 'Profile', sub: 'Your details and preferences' },
+    '/patient/chat': { title: 'Nurse Chat', sub: 'Chat directly with clinical staff' },
   };
 
   const currentMeta = routeNameMap[location.pathname] || routeNameMap['/patient'];
