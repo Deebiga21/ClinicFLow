@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Activity } from 'lucide-react';
@@ -136,77 +136,108 @@ const CrowdBackground = () => {
   );
 };
 
+import RoundCarousel from '../components/shared/RoundCarousel';
+
 export default function Landing() {
   return (
-    <div style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden', background: '#f0f9ff' }}>
+    <div style={{ background: '#f0f9ff', minHeight: '100vh' }}>
       
-      {/* Background Video */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          playsInline
-          style={{ 
-            width: '100%', 
-            height: '100%', 
-            objectFit: 'cover', 
-            opacity: 1,
-            filter: 'contrast(1.15) saturate(1.1) brightness(1.05)'
-          }}
-        >
-          <source src="/hospital_corridor.mp4" type="video/mp4" />
-        </video>
+      {/* Hero Section (100vh) */}
+      <div style={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>
+        {/* Background Video */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover', 
+              opacity: 1,
+              filter: 'contrast(1.15) saturate(1.1) brightness(1.05)'
+            }}
+          >
+            <source src="/hospital_corridor.mp4" type="video/mp4" />
+          </video>
+        </div>
+
+        {/* Top Navbar */}
+        <nav style={{ position: 'relative', zIndex: 10, padding: '24px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#0ea5e9' }}>
+            <div style={{ background: '#0ea5e9', color: 'white', padding: '6px', borderRadius: '8px' }}>
+               <Activity size={20} />
+            </div>
+            <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: '#0369a1' }}>ClinicFlow</span>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 32, fontSize: 14, fontWeight: 600, color: '#0284c7' }}>
+            <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>Platform</Link>
+            <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>AI Intelligence</Link>
+            <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>How it Works</Link>
+            <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>Research</Link>
+            <Link to="/nurse" style={{ background: 'rgba(255,255,255,0.8)', color: '#0369a1', padding: '10px 24px', borderRadius: 40, textDecoration: 'none', fontWeight: 600 }}>
+              Admin / Nurse Launch
+            </Link>
+          </div>
+        </nav>
+
+        {/* Main Content Centered */}
+        <div style={{ position: 'relative', zIndex: 10, height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            transition={{ duration: 0.6 }}
+            style={{ textAlign: 'center', maxWidth: 800 }}
+          >
+            <h1 style={{ fontSize: '90px', fontWeight: 900, color: '#0f172a', letterSpacing: '-3px', margin: '0 0 20px 0', lineHeight: 1 }}>
+              ClinicFlow
+            </h1>
+            <p style={{ fontSize: '24px', color: '#0369a1', fontWeight: 500, margin: '0 auto 40px', lineHeight: 1.4, maxWidth: 650 }}>
+              Predict the flow. Transform real-time clinic operations into predictive intelligence.
+            </p>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '40px' }}>
+              <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#0284c7', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)', border: '2px solid #0284c7' }}>
+                Patient Login
+              </Link>
+              <Link to="/nurse" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0284c7', color: '#fff', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(2, 132, 199, 0.4)' }}>
+                Nurse Dashboard <ArrowRight size={20} />
+              </Link>
+            </div>
+
+          </motion.div>
+        </div>
+
+        {/* Crowd Animation Bottom */}
+        <CrowdBackground />
       </div>
 
-      {/* Top Navbar */}
-      <nav style={{ position: 'relative', zIndex: 10, padding: '24px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#0ea5e9' }}>
-          <div style={{ background: '#0ea5e9', color: 'white', padding: '6px', borderRadius: '8px' }}>
-             <Activity size={20} />
-          </div>
-          <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: '#0369a1' }}>ClinicFlow</span>
+      {/* Carousel Section */}
+      <div style={{ padding: '100px 0', background: 'linear-gradient(to bottom, #f0f9ff, #ffffff)', position: 'relative', zIndex: 10 }}>
+        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+          <h2 style={{ fontSize: '42px', fontWeight: 800, color: '#0f172a', letterSpacing: '-1px' }}>Explore ClinicFlow Modules</h2>
+          <p style={{ fontSize: '18px', color: '#64748b', maxWidth: '600px', margin: '16px auto 0' }}>
+            Spin the interactive wheel and tap a card to jump directly into the corresponding dashboard.
+          </p>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32, fontSize: 14, fontWeight: 600, color: '#0284c7' }}>
-          <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>Platform</Link>
-          <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>AI Intelligence</Link>
-          <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>How it Works</Link>
-          <Link to="#" style={{ color: 'inherit', textDecoration: 'none' }}>Research</Link>
-          <Link to="/admin" style={{ background: 'rgba(255,255,255,0.8)', color: '#0369a1', padding: '10px 24px', borderRadius: 40, textDecoration: 'none', fontWeight: 600 }}>
-            Admin / Nurse Launch
-          </Link>
+        <div style={{ height: '600px', width: '100%', position: 'relative' }}>
+          <RoundCarousel 
+            items={[
+              { src: 'https://images.unsplash.com/photo-1551076805-e1869043e560?w=800&q=80', label: 'Nurse Dashboard', desc: 'Real-time patient flow & prep', path: '/nurse' },
+              { src: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80', label: 'Patient Dashboard', desc: 'Your clinic visit and wait time', path: '/patient' },
+              { src: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&q=80', label: 'Admin Center', desc: 'Clinic intelligence & operations', path: '/admin' },
+              { src: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800&q=80', label: 'Doctor Space', desc: 'Consultation & active workload', path: '/doctor' },
+              { src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80', label: 'Backend Pipeline', desc: 'Execute & view full ML workflow', path: '/pipeline' },
+              { src: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&q=80', label: 'AI Predict', desc: 'Waiting time & congestion ML', path: '/admin/predictions' }
+            ]}
+            imageWidth={250}
+            imageHeight={350}
+          />
         </div>
-      </nav>
-
-      {/* Main Content Centered */}
-      <div style={{ position: 'relative', zIndex: 10, height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }} 
-          animate={{ opacity: 1, scale: 1 }} 
-          transition={{ duration: 0.6 }}
-          style={{ textAlign: 'center', maxWidth: 800 }}
-        >
-          <h1 style={{ fontSize: '90px', fontWeight: 900, color: '#0f172a', letterSpacing: '-3px', margin: '0 0 20px 0', lineHeight: 1 }}>
-            ClinicFlow
-          </h1>
-          <p style={{ fontSize: '24px', color: '#0369a1', fontWeight: 500, margin: '0 auto 40px', lineHeight: 1.4, maxWidth: 650 }}>
-            Predict the flow. Transform real-time clinic operations into predictive intelligence.
-          </p>
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '40px' }}>
-            <Link to="/patient" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#0284c7', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)', border: '2px solid #0284c7' }}>
-              Patient Dashboard
-            </Link>
-            <Link to="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0284c7', color: '#fff', padding: '16px 36px', borderRadius: 40, fontSize: 18, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 25px rgba(2, 132, 199, 0.4)' }}>
-              Admin / Analyst Launch <ArrowRight size={20} />
-            </Link>
-          </div>
-
-        </motion.div>
       </div>
 
-      {/* Crowd Animation Bottom */}
-      <CrowdBackground />
     </div>
   );
 }

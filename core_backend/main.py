@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from services.orchestration import OrchestrationService
 import socketio
 import json
+import datetime
 
 from routers.patient_dashboard import router as patient_router
 from routers.nurse_dashboard import router as nurse_router
@@ -15,6 +16,9 @@ from routers.medications import router as medications_router
 from routers.admin_dummy import router as admin_dummy_router
 from routers.predictions import router as predictions_router
 from routers.operational import router as operational_router
+from routers.chat import router as chat_router
+from routers.auth import router as auth_router
+
 
 app = FastAPI(title="ClinicFlow Intelligence Core")
 
@@ -35,52 +39,14 @@ app.include_router(medications_router)
 app.include_router(admin_dummy_router)
 app.include_router(predictions_router)
 app.include_router(operational_router)
+app.include_router(chat_router)
+app.include_router(auth_router)
+
 
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
 
 orchestrator = OrchestrationService()
-
-class CheckInRequest(BaseModel):
-    appointment_id: str
-
-class ConsultStartRequest(BaseModel):
-    queue_id: str
-
-class ConsultEndRequest(BaseModel):
-    consultation_id: str
-    actual_duration_minutes: float
-
-@app.post("/api/pipeline/check-in")
-async def check_in_patient(req: CheckInRequest):
-    result = orchestrator.process_patient_check_in(req.appointment_id)
-    await sio.emit('systemBroadcast', result)
-    await manager.broadcast({'type': 'update', 'data': result})
-    return result
-
-@app.post("/api/pipeline/consultation/start")
-async def start_consultation(req: ConsultStartRequest):
-    result = orchestrator.process_consultation_start(req.queue_id)
-    await sio.emit('systemBroadcast', result)
-    await manager.broadcast({'type': 'update', 'data': result})
-    return result
-
-@app.post("/api/pipeline/consultation/end")
-async def end_consultation(req: ConsultEndRequest):
-    result = orchestrator.process_consultation_end(req.consultation_id, req.actual_duration_minutes)
-    await sio.emit('systemBroadcast', result)
-    await manager.broadcast({'type': 'update', 'data': result})
-    return result
-
-@sio.event
-async def connect(sid, environ, auth=None):
-    print("Socket.IO client connected:", sid)
-
-@sio.event
-async def disconnect(sid):
-    print("Socket.IO client disconnected:", sid)
-
-# Also expose standard WS for the Pipeline page if it wants it, or the Pipeline page can use socket.io too
 
 class ConnectionManager:
     def __init__(self):
@@ -103,6 +69,12 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+async def broadcast_event(event_name: str, payload: dict):
+    msg = {'type': event_name, 'data': payload}
+    await sio.emit(event_name, payload)
+    await sio.emit('systemBroadcast', msg) # Legacy support
+    await manager.broadcast(msg)
+
 @app.websocket("/ws/clinic")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
@@ -114,20 +86,110 @@ async def websocket_endpoint(websocket: WebSocket):
     except:
         manager.disconnect(websocket)
 
+@sio.event
+async def connect(sid, environ, auth=None):
+    print("Socket.IO client connected:", sid)
+
+@sio.event
+async def disconnect(sid):
+    print("Socket.IO client disconnected:", sid)
+
+
+class CheckInRequest(BaseModel):
+    appointment_id: str
+
+class ReadinessRequest(BaseModel):
+    patient_id: str
+    readiness_score: float = 100.0
+
+class QueueIdRequest(BaseModel):
+    queue_id: str
+
+class ConsultEndRequest(BaseModel):
+    consultation_id: str
+    actual_duration_minutes: float
+
+class PrescriptionRequest(BaseModel):
+    patient_id: str
+    appointment_id: str
+    doctor_id: str
+    consultation_id: str
+    medicine_name: str
+    dosage: str
+    frequency: str
+    duration_days: int
+
+@app.post("/api/pipeline/check-in")
+async def check_in_patient(req: CheckInRequest):
+    result = orchestrator.process_patient_check_in(req.appointment_id)
+    if "error" not in result:
+        await broadcast_event('patient_checked_in', result)
+        await broadcast_event('queue_updated', result)
+        await broadcast_event('prediction_updated', result)
+    return result
+
+@app.post("/api/pipeline/readiness")
+async def update_readiness(req: ReadinessRequest):
+    result = orchestrator.process_patient_readiness(req.patient_id, req.dict())
+    if "error" not in result:
+        await broadcast_event('patient_readiness_updated', result)
+    return result
+
+@app.post("/api/pipeline/call-next")
+async def call_next(req: QueueIdRequest):
+    result = orchestrator.process_call_next(req.queue_id)
+    if "error" not in result:
+        await broadcast_event('patient_called', result)
+        await broadcast_event('queue_updated', result)
+    return result
+
+@app.post("/api/pipeline/consultation/start")
+async def start_consultation(req: QueueIdRequest):
+    result = orchestrator.process_consultation_start(req.queue_id)
+    if "error" not in result:
+        await broadcast_event('consultation_started', result)
+        await broadcast_event('queue_updated', result)
+        await broadcast_event('prediction_updated', result)
+    return result
+
+@app.post("/api/pipeline/consultation/end")
+async def end_consultation(req: ConsultEndRequest):
+    result = orchestrator.process_consultation_end(req.consultation_id, req.actual_duration_minutes)
+    if "error" not in result:
+        await broadcast_event('consultation_completed', result)
+        await broadcast_event('queue_updated', result)
+    return result
+
+@app.post("/api/pipeline/prescription")
+async def create_prescription(req: PrescriptionRequest):
+    result = orchestrator.process_prescription(**req.dict())
+    if "error" not in result:
+        await broadcast_event('prescription_created', result)
+        await broadcast_event('medication_schedule_created', result)
+    return result
 
 @app.get("/api/dashboard/overview")
 def get_dashboard_overview():
     with orchestrator.Session() as session:
-        waiting = session.execute(text("SELECT count(*) FROM queue_entries WHERE status = 'Waiting'")).scalar()
-        in_consult = session.execute(text("SELECT count(*) FROM queue_entries WHERE status = 'In Consultation'")).scalar()
-        patients_today = session.execute(text("SELECT count(*) FROM queue_entries")).scalar()
+        waiting = session.execute(text("SELECT count(*) FROM queue_entries WHERE status = 'Waiting'")).scalar() or 0
+        in_consult = session.execute(text("SELECT count(*) FROM queue_entries WHERE status = 'In Consultation'")).scalar() or 0
+        patients_today = session.execute(text("SELECT count(*) FROM queue_entries")).scalar() or 0
+        completed_today = session.execute(text("SELECT count(*) FROM queue_entries WHERE status = 'Completed'")).scalar() or 0
         
-        # mock averages for dashboard based on DB data
+        # Calculate real averages from DB
+        avg_wait_res = session.execute(text("SELECT avg(estimated_wait_minutes) FROM queue_entries WHERE status = 'Waiting'")).scalar()
+        avg_wait = round(avg_wait_res, 1) if avg_wait_res else 0.0
+
+        avg_dur_res = session.execute(text("SELECT avg(actual_duration_minutes) FROM consultations WHERE status = 'Completed'")).scalar()
+        avg_dur = round(avg_dur_res, 1) if avg_dur_res else 0.0
+
         return {
             "patients_today": patients_today,
+            "completed_today": completed_today,
             "active_consultations": in_consult,
             "current_waiting": waiting,
-            "average_wait": 22,
+            "average_wait": avg_wait,
+            "average_consultation": avg_dur,
             "clinic_load": min(100, waiting * 5),
             "bottleneck_risk": {"severity": "High" if waiting > 10 else "Med" if waiting > 5 else "Low"}
         }
@@ -135,88 +197,103 @@ def get_dashboard_overview():
 @app.get("/api/pipeline/state")
 def get_clinic_state():
     with orchestrator.Session() as session:
-        waiting = session.execute(text("SELECT count(*) FROM queue_entries WHERE status = 'Waiting'")).scalar()
-        in_consult = session.execute(text("SELECT count(*) FROM queue_entries WHERE status = 'In Consultation'")).scalar()
+        waiting = session.execute(text("SELECT count(*) FROM queue_entries WHERE status = 'Waiting'")).scalar() or 0
+        in_consult = session.execute(text("SELECT count(*) FROM queue_entries WHERE status = 'In Consultation'")).scalar() or 0
         return {
             "waiting_count": waiting,
             "in_consultation_count": in_consult,
-            "models_loaded": True
+            "models_loaded": (orchestrator.wait_model is not None)
         }
 
 @app.get("/api/appointments")
 def get_appointments():
     with orchestrator.Session() as session:
-        # Get appointments for today or recent
-        # Just return the latest 50 for the UI
         query = text("""
             SELECT a.id as appointment_id, a.patient_id, a.doctor_id, a.appointment_date, a.appointment_time, a.status,
-                   p.id as p_id, d.specialization
+                   p.name as patient_name, d.name as doctor_name
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
             JOIN doctors d ON a.doctor_id = d.id
             ORDER BY a.appointment_date DESC, a.appointment_time DESC
             LIMIT 50
         """)
-        results = session.execute(query).fetchall()
-        
-        appointments = []
-        for r in results:
-            appointments.append({
-                "id": r[0],
-                "patient_name": f"Patient {r[1]}",
-                "doctor_name": f"Doctor {r[2]} ({r[7]})",
-                "date": r[3],
-                "time": r[4],
-                "status": r[5]
-            })
-            
-        return {"data": appointments}
+        results = session.execute(query).mappings().all()
+        return {"data": [dict(r) for r in results]}
+
+@app.get("/api/queue")
+def get_queue():
+    with orchestrator.Session() as session:
+        query = text("""
+            SELECT q.id, q.patient_id, q.appointment_id, q.status, q.token_number, q.queue_position, q.estimated_wait_minutes, p.name as patient_name
+            FROM queue_entries q
+            JOIN patients p ON q.patient_id = p.id
+            WHERE q.status NOT IN ('Completed', 'Cancelled')
+            ORDER BY q.queue_position ASC
+        """)
+        results = session.execute(query).mappings().all()
+        return {"data": [dict(r) for r in results]}
 
 @app.post("/api/appointments/{id}/status")
 def update_appointment_status(id: str, status: str):
     with orchestrator.Session() as session:
-        session.execute(text(f"UPDATE appointments SET status = '{status}' WHERE id = '{id}'"))
+        session.execute(text("UPDATE appointments SET status = :st WHERE id = :id"), {"st": status, "id": id})
         session.commit()
     return {"ok": True}
 
-@app.post("/api/appointments/{id}/check-in")
-async def check_in_appointment(id: str):
-    # Route it to the ML orchestration pipeline!
-    result = orchestrator.process_patient_check_in(id)
-    await sio.emit('systemBroadcast', result)
-    await manager.broadcast({'type': 'update', 'data': result})
-    return {"ok": True, "result": result}
+@app.get("/api/notifications/admin")
+def get_admin_notifications():
+    with orchestrator.Session() as session:
+        n = session.execute(text("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 20")).mappings().all()
+        return {"data": [dict(x) for x in n]}
+
 
 @app.get("/api/pipeline/test-flow")
 async def test_end_to_end_flow():
-    # Pick a random appointment that hasn't checked in
     with orchestrator.Session() as session:
-        res = session.execute(text("SELECT appointment_id FROM appointments WHERE status != 'No-Show' LIMIT 1")).fetchone()
+        from sqlalchemy import text
+        res = session.execute(text("SELECT id as appointment_id, patient_id, doctor_id FROM appointments WHERE status = 'Scheduled' LIMIT 1")).mappings().fetchone()
         if not res:
-            return {"error": "No appointment available"}
-        appt_id = res[0]
+            return {"error": "No scheduled appointments available"}
+        appt = dict(res)
         
-    # Run the pipeline flow
-    out_checkin = orchestrator.process_patient_check_in(appt_id)
-    queue_id = out_checkin.get("queue_id")
+    flow_log = []
     
-    out_start = orchestrator.process_consultation_start(queue_id)
-    consult_id = out_start.get("consultation_id")
+    # 1. Check-in
+    res1 = orchestrator.process_patient_check_in(appt["appointment_id"])
+    flow_log.append(res1)
+    if "error" in res1: return {"error": res1}
+    queue_id = res1["queue_id"]
+    await broadcast_event('patient_checked_in', res1)
     
-    # fake duration
-    out_end = orchestrator.process_consultation_end(consult_id, 16.5)
+    # 2. Readiness
+    res2 = orchestrator.process_patient_readiness(appt["patient_id"], {"readiness_score": 100})
+    flow_log.append(res2)
+    await broadcast_event('patient_readiness_updated', res2)
     
-    return {
-        "status": "Success",
-        "flow": [out_checkin, out_start, out_end]
-    }
-
-@app.get("/api/notifications/admin")
-def get_admin_notifications():
-    return {"data": []}
+    # 3. Call Next
+    res3 = orchestrator.process_call_next(queue_id)
+    flow_log.append(res3)
+    await broadcast_event('patient_called', res3)
+    
+    # 4. Start Consult
+    res4 = orchestrator.process_consultation_start(queue_id)
+    flow_log.append(res4)
+    consult_id = res4.get("consultation_id")
+    await broadcast_event('consultation_started', res4)
+    
+    # 5. End Consult
+    res5 = orchestrator.process_consultation_end(consult_id, 14.5)
+    flow_log.append(res5)
+    await broadcast_event('consultation_completed', res5)
+    
+    # 6. Prescription
+    res6 = orchestrator.process_prescription(appt["patient_id"], appt["appointment_id"], appt["doctor_id"], consult_id, "Amoxicillin", "500mg", "Twice daily", 5)
+    flow_log.append(res6)
+    await broadcast_event('prescription_created', res6)
+    
+    return {"status": "Success", "flow": flow_log}
 
 if __name__ == "__main__":
-    import uvicorn
-    # Important: run socket_app to enable Socket.IO
-    uvicorn.run(socket_app, host="0.0.0.0", port=8000)
 
+    import uvicorn
+    uvicorn.run(socket_app, host="0.0.0.0", port=8000)

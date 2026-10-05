@@ -68,3 +68,17 @@ def get_digital_twin_current_state():
 @router.post("/digital-twin/simulate")
 def simulate_digital_twin(config: dict = Body(...)):
     return {"data": admin_service.run_digital_twin_simulation(config)}
+
+@router.get("/patient-flow/live-queue")
+def get_live_queue():
+    with admin_service.Session() as session:
+        from sqlalchemy import text
+        q = session.execute(text("SELECT q.*, p.name as patient_name FROM queue_entries q JOIN patients p ON q.patient_id = p.id WHERE q.status != 'Completed'")).mappings().all()
+        return {"data": [dict(row) for row in q]}
+
+@router.get("/patient-flow/doctor-flow")
+def get_doctor_flow():
+    with admin_service.Session() as session:
+        from sqlalchemy import text
+        d = session.execute(text("SELECT * FROM doctors WHERE active = 1")).mappings().all()
+        return {"data": [dict(row) for row in d]}

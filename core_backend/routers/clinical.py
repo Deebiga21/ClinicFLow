@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from pydantic import BaseModel
 from services.orchestration import OrchestrationService
@@ -302,3 +302,38 @@ def save_visit(req: VisitCreate):
             session.commit()
             return {'status': 'success'}
         return {'status': 'error', 'message': 'No active consultation found'}
+
+
+@router.get("/api/doctors/availability")
+def get_doctors_availability():
+    from database.models import Doctor, Appointment
+    import datetime
+    
+    with orchestrator.Session() as db:
+        doctors = db.query(Doctor).filter(Doctor.active == True).all()
+    today = datetime.datetime.utcnow().date()
+    
+    res = []
+    for d in doctors:
+        # Check active appointments today
+        appts = db.query(Appointment).filter(
+            Appointment.doctor_id == d.id,
+            Appointment.appointment_date >= datetime.datetime.combine(today, datetime.time.min)
+        ).count()
+        
+        # Simple availability logic for the prototype
+        is_available = appts < 20 # Assuming 20 is max capacity
+        next_time = (datetime.datetime.utcnow() + datetime.timedelta(hours=1)).strftime("%I:00 %p")
+        
+        res.append({
+            "id": d.id,
+            "name": d.name,
+            "department": d.department,
+            "specialization": d.specialization,
+            "available": is_available,
+            "working_hours": "09:00 AM - 05:00 PM",
+            "current_workload": appts,
+            "next_available": next_time if is_available else None
+        })
+        
+    return {"data": res}

@@ -5,6 +5,41 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 Base = declarative_base()
 
+
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(String, primary_key=True)
+    role = Column(String)
+    phone = Column(String)
+    email = Column(String)
+    password_hash = Column(String)
+    patient_id = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class Bill(Base):
+    __tablename__ = 'bills'
+    id = Column(String, primary_key=True)
+    patient_id = Column(String, ForeignKey('patients.id'))
+    appointment_id = Column(String, ForeignKey('appointments.id'))
+    consultation_id = Column(String, nullable=True)
+    amount = Column(Float)
+    status = Column(String, default="Pending")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class Payment(Base):
+    __tablename__ = 'payments'
+    id = Column(String, primary_key=True)
+    patient_id = Column(String, ForeignKey('patients.id'))
+    appointment_id = Column(String, ForeignKey('appointments.id'))
+    amount = Column(Float)
+    status = Column(String)
+    payment_method = Column(String)
+    transaction_ref = Column(String)
+    bill_id = Column(String, nullable=True)
+    receipt_generated = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 class Patient(Base):
     __tablename__ = 'patients'
     id = Column(String, primary_key=True)
@@ -35,6 +70,8 @@ class Appointment(Base):
     appointment_date = Column(String)
     appointment_time = Column(String)
     appointment_type = Column(String)
+    payment_status = Column(String, default='Pending')
+    token_status = Column(String, default='Pending')
     status = Column(String)
     check_in_time = Column(DateTime, nullable=True)
     cancellation_time = Column(DateTime, nullable=True)
@@ -242,9 +279,22 @@ class Notification(Base):
     read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+class ChatMessage(Base):
+    __tablename__ = 'chat_messages'
+    id = Column(String, primary_key=True)
+    sender_id = Column(String)
+    sender_role = Column(String)
+    receiver_id = Column(String, nullable=True) # Optional direct receiver
+    channel = Column(String) # 'clinic_operations', 'nurse_chat', 'bot'
+    message = Column(Text)
+    message_type = Column(String, default="text") # 'text', 'alert', 'system'
+    related_entity_type = Column(String, nullable=True) # 'patient', 'queue', 'doctor'
+    related_entity_id = Column(String, nullable=True)
+    status = Column(String, default="sent") # 'sent', 'read'
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 if __name__ == "__main__":
-    db_path = 'sqlite:///clinic_core_v2.db'
+    db_path = 'sqlite:///../clinic_core_v2.db' # Fixed path for execution
     engine = create_engine(db_path)
     Base.metadata.create_all(engine)
     print("Database clinic_core_v2.db created with all tables.")

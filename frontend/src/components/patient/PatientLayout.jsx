@@ -8,14 +8,42 @@ import Header from '../shared/Header';
 import GlobalBackground from '../shared/GlobalBackground';
 import { api } from '../../services/api';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
+import { useAuth } from '../../context/AuthContext';
+
+import BookingWizard from '../../pages/patient/BookingWizard';
 
 export default function PatientLayout() {
   const location = useLocation();
-  const patientId = localStorage.getItem('demo_patient_id') || 'P_1';
+  const [bookingOpen, setBookingOpen] = React.useState(false);
+  const { user } = useAuth();
+  const [patientId, setPatientId] = useState(user?.patient_id || 'P_demo_1');
+
+  // Sync patientId if user changes
+  useEffect(() => {
+    if (user?.patient_id) setPatientId(user.patient_id);
+  }, [user]);
   
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const { lastEvent } = useClinicWebSocket();
+
+  // Watch for "patient_called" event
+  const [toast, setToast] = useState(null);
+  
+  useEffect(() => {
+    if (lastEvent?.event === 'patient_called' && lastEvent?.data?.patient_id === patientId) {
+      setToast("Your turn — The doctor is ready for your consultation.");
+      setTimeout(() => setToast(null), 10000);
+    }
+  }, [lastEvent, patientId]);
+
+
+  const handlePatientChange = (e) => {
+    const newId = e.target.value;
+    localStorage.setItem('demo_patient_id', newId);
+    setPatientId(newId);
+    setLoading(true);
+  };
 
   const fetchData = async () => {
     try {
@@ -32,45 +60,37 @@ export default function PatientLayout() {
     fetchData();
   }, [patientId, lastEvent]);
 
+  
   const patientItems = [
     {
-      title: 'MY VISIT',
+      title: 'DASHBOARD',
       links: [
-        { to: '/patient', end: true, icon: Home, label: 'Home' },
-        { to: '/patient/my-visit', icon: Clock, label: 'My Visit' },
-        { to: '/patient/journey', icon: Map, label: 'My Journey' }
+        { to: '/patient', end: true, icon: Home, label: 'HOME' },
+        { to: '/patient/appointments', icon: Calendar, label: 'MY APPOINTMENTS' },
+        { to: '#', onClick: () => setBookingOpen(true), icon: Calendar, label: 'BOOK APPOINTMENT' },
+        { to: '/patient/my-visit', icon: Clock, label: 'MY TOKEN' },
+        { to: '/patient/journey', icon: Map, label: 'MY JOURNEY' }
       ]
     },
     {
-      title: 'APPOINTMENTS',
+      title: 'RECORDS',
       links: [
-        { to: '/patient/appointments', icon: Calendar, label: 'Appointments' }
-      ]
-    },
-    {
-      title: 'MEDICATION & CARE',
-      links: [
-        { to: '/patient/prescriptions', icon: FileText, label: 'Prescriptions' },
-        { to: '/patient/medications', icon: Pill, label: 'Medications' }
-      ]
-    },
-    {
-      title: 'COMMUNICATION',
-      links: [
-        { to: '/patient/notifications', icon: Bell, label: 'Notifications' }
+        { to: '/patient/prescriptions', icon: FileText, label: 'PRESCRIPTIONS' },
+        { to: '/patient/medications', icon: Pill, label: 'MEDICATIONS' },
       ]
     },
     {
       title: 'ACCOUNT',
       links: [
-        { to: '/patient/profile', icon: User, label: 'Profile' }
+        { to: '/patient/notifications', icon: Bell, label: 'NOTIFICATIONS' },
+        { to: '/patient/profile', icon: User, label: 'PROFILE' }
       ]
     }
   ];
 
   const routeNameMap = {
     '/patient': { title: data?.patient?.name ? `Good morning, ${data.patient.name.split(' ')[0]}` : 'Good morning', sub: 'Here is your clinic visit at a glance' },
-    '/patient/my-visit': { title: 'My Visit', sub: 'Current waiting status' },
+    '/patient/my-visit': { title: 'My Token', sub: 'Your live token status and wait time' },
     '/patient/journey': { title: 'My Care Journey', sub: 'Your complete step-by-step progress' },
     '/patient/appointments': { title: 'Appointments', sub: 'Manage your upcoming visits' },
     '/patient/prescriptions': { title: 'My Prescriptions', sub: 'Approved clinician prescriptions' },
@@ -87,9 +107,18 @@ export default function PatientLayout() {
       <Sidebar items={patientItems} role="patient" />
       <div className="flex-1 ml-64 flex flex-col min-h-screen relative">
         <Header title={currentMeta.title} subtitle={currentMeta.sub} role="patient" />
-        <main className="flex-1 p-6 overflow-x-hidden">
-          <Outlet context={{ patientId, data, loading, fetchData }} />
+        
+        
+        {toast && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce font-bold">
+            {toast}
+          </div>
+        )}
+        <main className="flex-1 overflow-y-auto">
+
+          <Outlet context={{ data, loading }} />
         </main>
+        <BookingWizard isOpen={bookingOpen} onClose={() => setBookingOpen(false)} patientId={data?.patient?.id || patientId} />
       </div>
     </div>
   );
