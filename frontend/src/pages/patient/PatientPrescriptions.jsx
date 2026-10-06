@@ -37,7 +37,12 @@ export default function PatientPrescriptions() {
 
   return (
     <div className="p-6 max-w-4xl">
-      <h1 className="text-2xl font-semibold text-[#0A2540] mb-2">Prescriptions & Billing</h1>
+      <div className="flex justify-between items-center mb-2">
+        <h1 className="text-2xl font-semibold text-[#0A2540]">Prescriptions & Billing</h1>
+        <button onClick={() => setShowBilling(true)} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm">
+          Proceed to Bill
+        </button>
+      </div>
       <p className="text-gray-500 mb-6">Your clinician-approved prescriptions.</p>
 
       {showBilling && (
@@ -76,9 +81,7 @@ export default function PatientPrescriptions() {
                 <Download size={16} />
                 Download PDF
               </button>
-              <button onClick={() => setShowBilling(true)} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-lg text-sm font-bold transition-colors ml-2">
-                Proceed to Bill
-              </button>
+              
             </div>
             <div className="p-6">
               <div className="overflow-x-auto">
