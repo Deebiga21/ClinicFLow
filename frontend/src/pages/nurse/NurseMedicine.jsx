@@ -28,9 +28,9 @@ export default function NurseMedicine() {
         api.getExpiryRisks().catch(() => []),
         api.getMedicineDemandForecast().catch(() => ({ trained: false }))
       ]);
-      setInventory(invData?.data || []);
-      setExpiryRisks(expiryData?.data || []);
-      setDemandForecast(demandData?.data || demandData);
+      setInventory(Array.isArray(invData) ? invData : []);
+      setExpiryRisks(Array.isArray(expiryData) ? expiryData : []);
+      setDemandForecast(demandData);
     } catch (err) {
       console.error(err);
       setError('Failed to load medicine intelligence data.');
