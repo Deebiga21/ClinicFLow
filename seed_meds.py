@@ -1,27 +1,45 @@
-import sqlite3
+﻿import sqlite3
+import uuid
 from datetime import datetime, timedelta
 
-conn = sqlite3.connect('core_backend/clinic_core_v2.db')
+db_path = 'd:/clinic-queue -updated/core_backend/clinic_core_v2.db'
+conn = sqlite3.connect(db_path)
 c = conn.cursor()
 
-# Check if P_1 exists
-c.execute("SELECT id FROM patients WHERE id = 'P_1'")
-if not c.fetchone():
-    c.execute("INSERT INTO patients (id, name, phone, age, gender) VALUES ('P_1', 'John Doe', '555-1234', 35, 'Male')")
-
-# Insert a prescription for P_1
-c.execute("INSERT OR IGNORE INTO prescriptions (id, patient_id, appointment_id, doctor_id, consultation_id, medicine_id, medicine_name, dosage, frequency, duration_days, instructions, prescribed_at, status) VALUES ('PR_1', 'P_1', 'A_1', 'D_1', 'C_1', 'M_1', 'Amoxicillin', '500mg', '2 times a day', 5, 'Take after food', CURRENT_TIMESTAMP, 'Active')")
-
-# Insert some medication schedules
 now = datetime.now()
-schedule_times = [
-    now.replace(hour=8, minute=0, second=0).strftime('%H:%M'),
-    now.replace(hour=20, minute=0, second=0).strftime('%H:%M')
+today_str = now.strftime('%Y-%m-%d')
+tomorrow_str = (now + timedelta(days=1)).strftime('%Y-%m-%d')
+
+patient_id = 'P_demo_1'
+
+meds = [
+    ('Amoxicillin 500mg', '500mg', 'Twice daily', '7', 'Take after meals'),
+    ('Paracetamol 650mg', '650mg', 'Three times daily', '3', 'Take when fever > 100F'),
+    ('Vitamin C Complex', '1 tablet', 'Once daily', '30', 'Take in the morning')
 ]
 
-for i, stime in enumerate(schedule_times):
-    c.execute("INSERT OR IGNORE INTO medication_schedules (id, prescription_id, patient_id, medicine_id, scheduled_date, scheduled_time, frequency, status, created_at) VALUES (?, 'PR_1', 'P_1', 'M_1', ?, ?, 'Daily', 'Upcoming', CURRENT_TIMESTAMP)", (f'MS_{i+1}', now.strftime('%Y-%m-%d'), stime))
-
+for med, dos, freq, dur, inst in meds:
+    presc_id = str(uuid.uuid4())
+    c.execute('''
+        INSERT INTO prescriptions (id, patient_id, medicine_name, dosage, frequency, duration_days, instructions, prescribed_at, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Active')
+    ''', (presc_id, patient_id, med, dos, freq, dur, inst, now.isoformat()))
+    
+    times = []
+    if freq == 'Twice daily':
+        times = ['09:00 AM', '09:00 PM']
+    elif freq == 'Three times daily':
+        times = ['08:00 AM', '02:00 PM', '08:00 PM']
+    elif freq == 'Once daily':
+        times = ['08:00 AM']
+        
+    for t in times:
+        sch_id = str(uuid.uuid4())
+        c.execute('''
+            INSERT INTO medication_schedules (id, prescription_id, patient_id, medicine_id, scheduled_date, scheduled_time, frequency, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', ?)
+        ''', (sch_id, presc_id, patient_id, med, today_str, t, freq, now.isoformat()))
+        
 conn.commit()
 conn.close()
-print("Data seeded")
+print("Data inserted for P_demo_1")
