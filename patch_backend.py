@@ -1,3 +1,9 @@
+﻿import re
+
+with open('core_backend/routers/medicines.py', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+replacement = '''
 from fastapi import APIRouter
 from sqlalchemy import text
 from services.orchestration import OrchestrationService
@@ -89,3 +95,7 @@ def get_demand_forecast():
         {"date": "Sun", "Amoxicillin": 8,  "Paracetamol": 25, "Ibuprofen": 10}
     ]
     return {'data': {'trained': True, 'historical_usage': historical, 'forecasts': []}}
+'''
+
+with open('core_backend/routers/medicines.py', 'w', encoding='utf-8') as f:
+    f.write(replacement.strip() + "\\n")
