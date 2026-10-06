@@ -1,4 +1,4 @@
-﻿import datetime
+import datetime
 import uuid
 import re
 from sqlalchemy.orm import sessionmaker
@@ -116,15 +116,50 @@ class ChatService:
                 return res.strip()
                 
             # 6. Patient flow / Today's flow
-            elif "flow" in msg:
+            elif "flow" in msg or "today" in msg:
                 completed = session.query(QueueEntry).filter(QueueEntry.status == 'Completed').count()
                 waiting = session.query(QueueEntry).filter(QueueEntry.status == 'Waiting').count()
                 consult = session.query(QueueEntry).filter(QueueEntry.status == 'In Consultation').count()
-                return f"Today's Patient Flow: {completed} Completed, {consult} In Consultation, {waiting} Waiting."
-                
+                total = completed + waiting + consult
+                return f"📊 Today's Patient Flow Summary:\n• {waiting} patients currently waiting\n• {consult} in consultation\n• {completed} completed\n• {total} total patients seen today"
+
+            # 7. Medications / Prescriptions
+            elif "medication" in msg or "prescription" in msg or "medicine" in msg and "expiry" not in msg:
+                rows = session.execute(text("SELECT medicine_name, dosage, frequency FROM prescriptions WHERE status='Active' LIMIT 10")).fetchall()
+                if not rows:
+                    return "No active prescriptions found in the system."
+                res = "💊 Active Prescriptions:\n"
+                for r in rows:
+                    res += f"• {r[0]} — {r[1]}, {r[2]}\n"
+                return res.strip()
+
+            # 8. Appointments / Scheduled
+            elif "appointment" in msg or "scheduled" in msg:
+                rows = session.execute(text("SELECT patient_id, doctor_id, appointment_date FROM appointments WHERE status='Scheduled' LIMIT 5")).fetchall()
+                if not rows:
+                    return "No upcoming appointments found."
+                res = "📅 Upcoming Appointments:\n"
+                for r in rows:
+                    res += f"• Patient {r[0]} with Dr. {r[1]} on {r[2]}\n"
+                return res.strip()
+
+            # 9. Billing / Payments
+            elif "bill" in msg or "payment" in msg or "pay" in msg:
+                rows = session.execute(text("SELECT patient_id, total_amount, status FROM bills WHERE status='Pending' LIMIT 5")).fetchall()
+                if not rows:
+                    return "✅ No pending bills found."
+                res = f"💳 {len(rows)} Pending Bill(s):\n"
+                for r in rows:
+                    res += f"• Patient {r[0]}: ₹{r[1]} — {r[2]}\n"
+                return res.strip()
+
+            # 10. Hello / Hi / Greeting
+            elif any(g in msg for g in ["hello", "hi ", "hey", "good morning", "good evening"]):
+                return f"Hello! 👋 I'm ClinicFlow's AI Assistant with live database access. I can help you with:\n• Queue status & wait times\n• Doctor workload\n• Medicine expiry alerts\n• Patient flow stats\n• Billing & prescriptions\n• Active ML models\n\nWhat would you like to know?"
+
             # Fallback
             else:
-                return f"I didn't quite understand that operational query. I can help you with queue status, doctor workload, medicine expiry, or ML model status."
+                return f"🤔 I'm not sure about that. I can answer questions about:\n• Queue status (\"how many waiting?\")\n• Patient flow (\"show today's flow\")\n• Medicines (\"expiry risks?\", \"active prescriptions\")\n• Billing (\"pending payments\")\n• Doctor workload\n• ML model status\n\nTry one of those!"
 
 
     def handle_bot_query(self, sender_id, sender_role, message):

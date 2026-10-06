@@ -111,6 +111,18 @@ export function getBotReply(message, ctx) {
 }
 
 export const SUGGESTED_PROMPTS = {
-  patient: ['How long is my wait?', "What's my token number?", 'How do I check out?', 'Who is being called now?'],
-  staff: ['How do I call the next patient?', 'How do I add a patient?', 'What is the average consult time?']
+  patient: [
+    'How long is my wait?',
+    "What medications do I have?",
+    'Who is being seen now?',
+    'What is my token number?'
+  ],
+  staff: [
+    'How many patients are waiting?',
+    'Who is next in queue?',
+    'Show today patient flow',
+    'Any medicine expiry risks?',
+    'What is the doctor workload?',
+    'Show active ML models'
+  ]
 };
