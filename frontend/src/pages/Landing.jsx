@@ -222,7 +222,7 @@ export default function Landing() {
           </p>
         </div>
         
-        <div style={{ height: '600px', width: '100%', position: 'relative' }}>
+        <div style={{ height: '700px', width: '100%', position: 'relative' }}>
           <RoundCarousel 
             items={[
               { src: 'https://images.unsplash.com/photo-1551076805-e1869043e560?w=800&q=80', label: 'Nurse Dashboard', desc: 'Real-time patient flow & prep', path: '/nurse' },
@@ -232,8 +232,8 @@ export default function Landing() {
               { src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80', label: 'Backend Pipeline', desc: 'Execute & view full ML workflow', path: '/pipeline' },
               { src: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&q=80', label: 'AI Predict', desc: 'Waiting time & congestion ML', path: '/admin/predictions' }
             ]}
-            imageWidth={250}
-            imageHeight={350}
+            imageWidth={340}
+            imageHeight={480}
           />
         </div>
       </div>
