@@ -52,7 +52,7 @@ class CallNextReq(BaseModel):
 
 @router.get("/api/operational/queue")
 def get_live_queue():
-    from services.orchestration import orchestrator
+    from main import orchestrator
     with orchestrator.Session() as session:
         # Get active queue items
         query = """
@@ -83,7 +83,7 @@ def get_live_queue():
 
 @router.post("/api/operational/call-next")
 def call_next_patient(req: CallNextReq):
-    from services.orchestration import orchestrator
+    from main import orchestrator
     with orchestrator.Session() as session:
         # End current
         session.execute(text("UPDATE queue_entries SET status = 'Completed', consultation_completed_at = CURRENT_TIMESTAMP WHERE doctor_id = :did AND status = 'In Consultation'"), {'did': req.doctorId})
