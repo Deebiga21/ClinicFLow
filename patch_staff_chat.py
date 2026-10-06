@@ -1,3 +1,9 @@
+﻿import re
+
+with open('frontend/src/pages/StaffChat.jsx', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+replacement = '''
 import { useEffect, useState, useCallback } from 'react';
 import ChatPanel from '../components/ChatPanel';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +17,7 @@ export default function StaffChat() {
 
   const fetchPatients = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/nurse/dashboard`);
+      const res = await fetch(${API_BASE}/nurse/dashboard);
       const data = await res.json();
       setPatients(data.live_queue || []);
     } catch(e) {}
@@ -52,18 +58,14 @@ export default function StaffChat() {
               <button 
                 key={p.patient_id} 
                 onClick={() => setActivePatient(p)}
-                className={`w-full text-left p-3 rounded-lg border transition-all flex flex-col gap-1 ${
-                  activePatient?.patient_id === p.patient_id 
-                    ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                    : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'
-                }`}
+                className={w-full text-left p-3 rounded-lg border transition-all flex flex-col gap-1 }
               >
                 <div className="flex justify-between items-center w-full">
                   <span className="font-bold text-[#0A2540] truncate pr-2">{p.patient_name}</span>
                   <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">#{p.token_number}</span>
                 </div>
                 <div className="flex justify-between items-center w-full text-xs">
-                  <span className={`px-2 py-0.5 rounded font-bold ${p.status === 'Waiting' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                  <span className={px-2 py-0.5 rounded font-bold }>
                     {p.status}
                   </span>
                   <span className="text-slate-500 flex items-center gap-1">
@@ -90,7 +92,7 @@ export default function StaffChat() {
                 </div>
               </div>
               <div className="flex-1 overflow-hidden p-4">
-                <ChatPanel channelId={`patient_${activePatient.patient_id}`} />
+                <ChatPanel channelId={patient_} />
               </div>
             </>
           ) : (
@@ -104,3 +106,7 @@ export default function StaffChat() {
     </div>
   );
 }
+'''
+
+with open('frontend/src/pages/StaffChat.jsx', 'w', encoding='utf-8') as f:
+    f.write(replacement.strip() + "\\n")

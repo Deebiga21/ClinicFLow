@@ -1,3 +1,9 @@
+﻿import re
+
+with open('frontend/src/pages/StaffChat.jsx', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+replacement = '''
 import { useEffect, useState, useCallback } from 'react';
 import ChatPanel from '../components/ChatPanel';
 import { useAuth } from '../context/AuthContext';
@@ -104,3 +110,7 @@ export default function StaffChat() {
     </div>
   );
 }
+'''
+
+with open('frontend/src/pages/StaffChat.jsx', 'w', encoding='utf-8') as f:
+    f.write(replacement.strip() + "\n")
