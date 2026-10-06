@@ -17,7 +17,7 @@ export default function PatientPrescriptions() {
   useEffect(() => {
     if (lastEvent) {
       const type = lastEvent.type || lastEvent.event;
-      if (type === "billing_notified" || type === "proceed_to_bill") {
+      if (type === "billing_notified" || type === "proceed_to_bill" || type === "consultation_ended") {
         // Here we could check patient_id if needed
         setShowBilling(true);
       }

@@ -157,8 +157,8 @@ def call_next(req: CallNextRequest):
         import asyncio
         from main import manager, sio
         try:
-            loop = asyncio.get_event_loop()
-            loop.create_task(sio.emit('systemBroadcast', {"event": "patient_called", "patient_id": called_patient_id}))
+            
+            await sio.emit('systemBroadcast', {"event": "patient_called", "patient_id": called_patient_id}))
             loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "patient_called", "patient_id": called_patient_id}}))
         except Exception as e:
             pass
@@ -203,7 +203,7 @@ class AppointmentCreate(BaseModel):
     additional_information: str = ""
 
 @router.post("/api/appointments")
-def create_appointment(req: AppointmentCreate):
+async def create_appointment(req: AppointmentCreate):
     import uuid
     a_id = str(uuid.uuid4())
     p_id = req.patient_id or str(uuid.uuid4())
@@ -236,7 +236,7 @@ def create_appointment(req: AppointmentCreate):
     import asyncio
     from main import manager, sio
     try:
-        loop = asyncio.get_event_loop()
+        
         ws_data = {
             "event": "appointment_created", 
             "patient_id": p_id,
@@ -247,8 +247,8 @@ def create_appointment(req: AppointmentCreate):
             "type": req.appointment_type,
             "doctor_id": d_id
         }
-        loop.create_task(sio.emit('systemBroadcast', ws_data))
-        loop.create_task(manager.broadcast({'type': 'update', 'data': ws_data}))
+        await sio.emit('systemBroadcast', ws_data))
+        await manager.broadcast({'type': 'update', 'data': ws_data})
     except Exception as e:
         pass
 
@@ -359,8 +359,8 @@ def save_visit(req: VisitCreate):
             import asyncio
             from main import manager, sio
             try:
-                loop = asyncio.get_event_loop()
-                loop.create_task(sio.emit('systemBroadcast', {"event": "consultation_completed", "patient_id": patient_id}))
+                
+                await sio.emit('systemBroadcast', {"event": "consultation_completed", "patient_id": patient_id}))
                 loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "consultation_completed", "patient_id": patient_id}}))
             except Exception as e:
                 pass
@@ -429,8 +429,8 @@ def create_bill(req: BillCreate):
         import asyncio
         from main import manager, sio
         try:
-            loop = asyncio.get_event_loop()
-            loop.create_task(sio.emit('systemBroadcast', {"event": "bill_generated", "patient_id": req.patient_id}))
+            
+            await sio.emit('systemBroadcast', {"event": "bill_generated", "patient_id": req.patient_id}))
             loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "bill_generated", "patient_id": req.patient_id}}))
         except Exception:
             pass
@@ -472,8 +472,8 @@ def create_payment(req: dict):
         import asyncio
         from main import manager, sio
         try:
-            loop = asyncio.get_event_loop()
-            loop.create_task(sio.emit('systemBroadcast', {"event": "payment_successful", "patient_id": patient_id}))
+            
+            await sio.emit('systemBroadcast', {"event": "payment_successful", "patient_id": patient_id}))
             loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "payment_successful", "patient_id": patient_id}}))
         except Exception:
             pass
