@@ -30,19 +30,28 @@ export default function PatientJourney() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-[#0A2540] mb-2">Health Journey</h1>
-        <p className="text-slate-500">A look back at your past visits and milestones.</p>
+        <p className="text-slate-500">A step-by-step look at your past visits and milestones.</p>
       </div>
 
-      <div className="space-y-4">
+      <div className="relative border-l-2 border-sky-100 ml-4 space-y-8 pb-8">
         {journey.map((item, i) => (
-          <div key={i} className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex gap-4 items-start">
-            <div className="mt-1 bg-cyan-50 text-cyan-600 p-2 rounded-full shrink-0">
-              <Activity size={20} />
+          <div key={i} className="relative pl-8">
+            {/* Timeline Dot */}
+            <div className="absolute -left-[17px] top-1 bg-white border-4 border-sky-500 w-8 h-8 rounded-full flex items-center justify-center shadow-sm">
+              <Activity size={14} className="text-sky-500" />
             </div>
-            <div>
-              <h3 className="font-semibold text-slate-800">{item.stage}</h3>
-              <p className="text-sm text-slate-500">{new Date(item.stage_started_at).toLocaleString()}</p>
-              <p className="text-slate-600 mt-2">{item.notes || 'Status updated.'}</p>
+            
+            {/* Content Card */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-bold text-lg text-slate-800">{item.stage || 'Milestone'}</h3>
+                <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
+                  {new Date(item.stage_started_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                </span>
+              </div>
+              <p className="text-slate-600 leading-relaxed">
+                {item.notes || 'Status successfully updated for this stage of your journey.'}
+              </p>
             </div>
           </div>
         ))}
