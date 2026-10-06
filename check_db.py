@@ -1,9 +1,14 @@
 import sqlite3
-conn = sqlite3.connect(r'd:\ClinicFLow\core_backend\clinic_core_v2.db')
-c = conn.cursor()
-tables = c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
-print("Tables and row counts:")
-for t in tables:
-    count = c.execute(f"SELECT count(*) FROM {t[0]}").fetchone()[0]
-    print(f"  {t[0]}: {count} rows")
-conn.close()
+try:
+    conn = sqlite3.connect('core_backend/clinic_core_v2.db')
+    c = conn.cursor()
+    c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    tables = c.fetchall()
+    for table in tables:
+        print(table[0])
+        c.execute(f"PRAGMA table_info({table[0]})")
+        cols = c.fetchall()
+        for col in cols:
+            print(f"  {col[1]}")
+except Exception as e:
+    print(e)

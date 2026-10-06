@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { SOCKET_URL } from '../config';
 
 export function useClinicWebSocket() {
   const [socket, setSocket] = useState(null);
@@ -7,11 +6,9 @@ export function useClinicWebSocket() {
   const reconnectTimeout = useRef(null);
 
   const connect = useCallback(() => {
-    // Determine ws url based on current host or hardcoded API
+    // Use the current page host so connections go through Vite's WS proxy in dev
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // If we're proxying or connecting directly:
-    const wsHost = SOCKET_URL.replace(/^http(s?):\/\//, '');
-    const wsUrl = `${wsProtocol}//${wsHost}/ws/clinic`;
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/clinic`;
 
     console.log('Connecting to WebSocket:', wsUrl);
     const ws = new WebSocket(wsUrl);

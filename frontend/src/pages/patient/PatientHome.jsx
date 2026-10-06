@@ -5,10 +5,11 @@ import {
   MapPin, Calendar, Pill, Navigation, Activity, X
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { API_BASE } from '../../config';
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function PatientHome() {
-  const { data, loading } = useOutletContext();
+  const { data, loading, setBookingOpen } = useOutletContext();
   const [waitExplanation, setWaitExplanation] = useState(null);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [checkInSuccess, setCheckInSuccess] = useState(false);
@@ -33,7 +34,7 @@ export default function PatientHome() {
     if (!data?.today_appointment?.id || data?.queue_status || isCheckingIn || checkInSuccess) return;
     setIsCheckingIn(true);
     try {
-      await fetch('http://localhost:8000/api/pipeline/check-in', {
+      await fetch(`${API_BASE}/pipeline/check-in`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ appointment_id: data.today_appointment.id })
@@ -49,7 +50,7 @@ export default function PatientHome() {
 
   useEffect(() => {
     if (data?.patient?.id) {
-      fetch(`http://localhost:8000/api/patient/${data.patient.id}/wait-explanation`)
+      fetch(`${API_BASE}/patient/${data.patient.id}/wait-explanation`)
          .then(res => res.json())
          .then(res => setWaitExplanation(res))
          .catch(err => console.error(err));
@@ -244,8 +245,12 @@ export default function PatientHome() {
                 </div>
               </div>
             ) : (
-              <div className="p-8 text-center text-gray-500">
-                <p>No appointments booked for today.</p>
+              <div className="p-8 flex flex-col items-center justify-center text-center text-gray-500">
+                <Calendar size={48} className="text-gray-300 mb-4" />
+                <p className="mb-6 font-medium text-gray-600">No appointment booked yet.</p>
+                <button onClick={() => setBookingOpen(true)} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition-colors uppercase tracking-wide text-sm">
+                  Book Appointment
+                </button>
               </div>
             )}
           </div>

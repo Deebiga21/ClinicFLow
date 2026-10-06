@@ -4,7 +4,7 @@ import EmptyState from '../../components/shared/EmptyState';
 import { Bell, RefreshCw } from 'lucide-react';
 
 export default function PatientNotifications() {
-  const { data, loading } = useOutletContext();
+  const { data, loading, localNotifications } = useOutletContext();
 
   if (loading) {
     return (
@@ -15,7 +15,7 @@ export default function PatientNotifications() {
     );
   }
 
-  const notifications = data?.notifications || [];
+  const notifications = [...(localNotifications || []), ...(data?.notifications || [])];
 
   if (notifications.length === 0) return (
     <div className="p-6 h-full flex flex-col">

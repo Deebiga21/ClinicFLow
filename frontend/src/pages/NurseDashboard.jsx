@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { API_BASE } from '../config';
+import { useClinicWebSocket } from '../hooks/useClinicWebSocket';
 import { 
   Users, Activity, ClipboardList, Clock, 
   AlertTriangle, PhoneCall, Pill, ShieldAlert 
@@ -9,45 +10,62 @@ export default function NurseDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
+  const { lastEvent } = useClinicWebSocket();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/nurse/dashboard`);
       if (!res.ok) throw new Error('Failed to load nurse dashboard');
       const json = await res.json();
       setData(json);
+      setError(null);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
+
+  // Auto-refresh when WebSocket events arrive (nurse/patient pipeline actions)
+  useEffect(() => {
+    if (lastEvent) {
+      fetchData();
+    }
+  }, [lastEvent, fetchData]);
 
 
   const handleAction = async (queue_id, actionType) => {
+    setActionLoading(queue_id);
     try {
       let endpoint = '';
-      if (actionType === 'start') endpoint = '/api/pipeline/nurse/start';
-      else if (actionType === 'ready') endpoint = '/api/pipeline/nurse/ready';
-      else if (actionType === 'send') endpoint = '/api/pipeline/nurse/send-doctor';
+      if (actionType === 'start') endpoint = '/pipeline/nurse/start';
+      else if (actionType === 'ready') endpoint = '/pipeline/nurse/ready';
+      else if (actionType === 'send') endpoint = '/pipeline/nurse/send-doctor';
       
       const res = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ queue_id })
       });
-      if (res.ok) {
-        // Optimistically reload or wait for websocket
-        window.location.reload();
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error('Action failed:', res.status, errText);
+        alert(`Action failed: ${res.status}`);
+      } else {
+        await fetchData();
       }
     } catch (err) {
       console.error(err);
+      alert(`Network error: ${err.message}`);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -124,13 +142,13 @@ export default function NurseDashboard() {
                       <td style={{ padding: '12px 8px', color: '#475569', fontSize: 14 }}>{q.predicted_wait || '-'} mins</td>
                       <td style={{ padding: '12px 8px' }}>
                         {q.status === 'Waiting' && (
-                          <button onClick={() => handleAction(q.id, 'start')} style={{ background: '#0ea5e9', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: 'pointer', marginRight: 4 }}>Call Next</button>
+                          <button disabled={actionLoading === q.id} onClick={() => handleAction(q.id, 'start')} style={{ background: actionLoading === q.id ? '#94a3b8' : '#0ea5e9', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: actionLoading === q.id ? 'wait' : 'pointer', marginRight: 4 }}>{actionLoading === q.id ? 'Calling...' : 'Call Next'}</button>
                         )}
                         {q.status === 'With Nurse' && (
-                          <button onClick={() => handleAction(q.id, 'ready')} style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: 'pointer', marginRight: 4 }}>Mark Ready</button>
+                          <button disabled={actionLoading === q.id} onClick={() => handleAction(q.id, 'ready')} style={{ background: actionLoading === q.id ? '#94a3b8' : '#f59e0b', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: actionLoading === q.id ? 'wait' : 'pointer', marginRight: 4 }}>{actionLoading === q.id ? 'Updating...' : 'Mark Ready'}</button>
                         )}
                         {q.status === 'Ready' && (
-                          <button onClick={() => handleAction(q.id, 'send')} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Send to Dr</button>
+                          <button disabled={actionLoading === q.id} onClick={() => handleAction(q.id, 'send')} style={{ background: actionLoading === q.id ? '#94a3b8' : '#10b981', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: actionLoading === q.id ? 'wait' : 'pointer' }}>{actionLoading === q.id ? 'Sending...' : 'Send to Dr'}</button>
                         )}
                       </td>
                     </tr>

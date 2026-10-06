@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, Clock, User, Phone, CheckCircle, Clock as ClockIcon, XCircle, AlertCircle, PlayCircle, MoreHorizontal } from 'lucide-react';
 import { API_BASE } from '../config';
 import { useAuth } from '../context/AuthContext';
-import { useWebSocket } from '../context/WebSocketContext';
+import { useClinicWebSocket } from '../hooks/useClinicWebSocket';
 import AppointmentModal from '../components/AppointmentModal';
 
 export default function Appointments() {
@@ -12,11 +12,10 @@ export default function Appointments() {
   const [editingAppointment, setEditingAppointment] = useState(null);
   const { token } = useAuth();
   
-  // Use websocket to get real-time updates if needed, though we will refetch manually on actions
-  const { socket } = useWebSocket();
+  const { lastEvent } = useClinicWebSocket();
 
-  const fetchAppointments = () => {
-    fetch(`http://localhost:8000/api/appointments`, {
+  const fetchAppointments = useCallback(() => {
+    fetch(`${API_BASE}/appointments`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -28,24 +27,25 @@ export default function Appointments() {
         console.error('Error fetching appointments:', err);
         setLoading(false);
       });
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchAppointments();
-    
-    if (socket) {
-      socket.on('appointment_updated', fetchAppointments);
-      socket.on('patient_checked_in', fetchAppointments);
-      return () => {
-        socket.off('appointment_updated', fetchAppointments);
-        socket.off('patient_checked_in', fetchAppointments);
-      };
+  }, [fetchAppointments]);
+
+  useEffect(() => {
+    if (lastEvent) {
+      const ev = lastEvent?.data?.event || lastEvent?.event;
+      if (ev === 'appointment_created' || ev === 'patient_checked_in') {
+        fetchAppointments();
+      }
     }
-  }, [socket, token]);
+  }, [lastEvent, fetchAppointments]);
+
 
   const handleStatusUpdate = async (id, status) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/appointments/${id}/status?status=${status}`, {
+      const res = await fetch(`${API_BASE}/appointments/${id}/status?status=${status}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -58,7 +58,7 @@ export default function Appointments() {
 
   const handleCheckIn = async (id) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/appointments/${id}/check-in`, {
+      const res = await fetch(`${API_BASE}/appointments/${id}/check-in`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -73,8 +73,8 @@ export default function Appointments() {
     try {
       const isEdit = !!editingAppointment;
       const url = isEdit 
-        ? `http://localhost:8000/api/appointments/${editingAppointment.id}`
-        : `http://localhost:8000/api/appointments`;
+        ? `${API_BASE}/appointments/${editingAppointment.id}`
+        : `${API_BASE}/appointments`;
       
       const res = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',
@@ -99,7 +99,7 @@ export default function Appointments() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this appointment?")) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/appointments/${id}`, {
+      const res = await fetch(`${API_BASE}/appointments/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

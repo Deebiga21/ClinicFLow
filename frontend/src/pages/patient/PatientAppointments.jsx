@@ -4,11 +4,28 @@ import EmptyState from '../../components/shared/EmptyState';
 import StatusBadge from '../../components/shared/StatusBadge';
 import { Calendar, RefreshCw, Plus, ChevronRight, X, User, Clock, FileText } from 'lucide-react';
 import BookingWizard from './BookingWizard';
+import { API_BASE } from '../../config';
 
 export default function PatientAppointments() {
   const { data, loading, fetchData } = useOutletContext();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancel = async (id) => {
+    if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
+    setCancelling(true);
+    try {
+      await fetch(`${API_BASE}/appointments/${id}`, { method: 'DELETE' });
+      setSelectedAppt(null);
+      if (fetchData) fetchData();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to cancel appointment");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -111,7 +128,9 @@ export default function PatientAppointments() {
               
               <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 mt-2">
                 <button onClick={() => setSelectedAppt(null)} className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Close</button>
-                <button className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition">Cancel Visit</button>
+                <button onClick={() => handleCancel(selectedAppt.id)} disabled={cancelling} className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition disabled:opacity-50">
+                  {cancelling ? 'Cancelling...' : 'Cancel Visit'}
+                </button>
               </div>
             </div>
           </div>

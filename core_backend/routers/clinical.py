@@ -196,6 +196,11 @@ class AppointmentCreate(BaseModel):
     doctor_id: str = ""
     date: str = ""
     time: str = ""
+    appointment_type: str = "Consultation"
+    reason: str = ""
+    symptoms: str = ""
+    symptom_start: str = ""
+    additional_information: str = ""
 
 @router.post("/api/appointments")
 def create_appointment(req: AppointmentCreate):
@@ -214,9 +219,9 @@ def create_appointment(req: AppointmentCreate):
             session.execute(text("INSERT INTO doctors (id, name, active, created_at) VALUES (:id, :name, 1, CURRENT_TIMESTAMP)"), {"id": d_id, "name": req.doctor_name or "Doctor"})
             
         session.execute(text("""
-            INSERT INTO appointments (id, patient_id, doctor_id, appointment_date, appointment_time, status, created_at)
-            VALUES (:id, :pid, :did, :date, :time, 'Scheduled', CURRENT_TIMESTAMP)
-        """), {"id": a_id, "pid": p_id, "did": d_id, "date": req.date, "time": req.time})
+            INSERT INTO appointments (id, patient_id, doctor_id, appointment_date, appointment_time, appointment_type, status, created_at)
+            VALUES (:id, :pid, :did, :date, :time, :type, 'Scheduled', CURRENT_TIMESTAMP)
+        """), {"id": a_id, "pid": p_id, "did": d_id, "date": req.date, "time": req.time, "type": req.appointment_type})
         
         # Add to patient journey
         journey_id = str(uuid.uuid4())
@@ -232,8 +237,18 @@ def create_appointment(req: AppointmentCreate):
     from main import manager, sio
     try:
         loop = asyncio.get_event_loop()
-        loop.create_task(sio.emit('systemBroadcast', {"event": "appointment_created", "patient_id": p_id}))
-        loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "appointment_created", "patient_id": p_id}}))
+        ws_data = {
+            "event": "appointment_created", 
+            "patient_id": p_id,
+            "patient_name": req.patient_name,
+            "appointment_id": a_id,
+            "reason": req.reason,
+            "symptoms": req.symptoms,
+            "type": req.appointment_type,
+            "doctor_id": d_id
+        }
+        loop.create_task(sio.emit('systemBroadcast', ws_data))
+        loop.create_task(manager.broadcast({'type': 'update', 'data': ws_data}))
     except Exception as e:
         pass
 

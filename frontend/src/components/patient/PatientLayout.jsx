@@ -12,6 +12,27 @@ import { useAuth } from '../../context/AuthContext';
 
 import BookingWizard from '../../pages/patient/BookingWizard';
 
+
+const playNotificationSound = () => {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.type = 'triangle';
+    oscillator.frequency.setValueAtTime(660, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.5);
+  } catch (e) {
+    console.error("Audio play failed", e);
+  }
+};
+
 export default function PatientLayout() {
   const location = useLocation();
   const [bookingOpen, setBookingOpen] = React.useState(false);
@@ -29,25 +50,28 @@ export default function PatientLayout() {
 
   // Watch for "patient_called" event
   const [toast, setToast] = useState(null);
+  const [localNotifications, setLocalNotifications] = useState([]);
   
   useEffect(() => {
     if (
-      ['patient_called', 'NURSE_PREPARATION_STARTED', 'PATIENT_READY', 'PATIENT_SENT_TO_DOCTOR'].includes(lastEvent?.event) && 
-      lastEvent?.data?.patient_id === patientId
+      ['patient_called', 'NURSE_PREPARATION_STARTED', 'PATIENT_READY', 'PATIENT_SENT_TO_DOCTOR'].includes((lastEvent?.data?.event || lastEvent?.event)) && 
+      (lastEvent?.data?.patient_id || lastEvent?.patient_id) === patientId
     ) {
       let msg = "Your turn — The doctor is ready for your consultation.";
       let title = "🔔 YOUR TURN";
-      if (lastEvent.event === 'NURSE_PREPARATION_STARTED') {
+      if ((lastEvent?.data?.event || lastEvent?.event) === 'NURSE_PREPARATION_STARTED') {
          title = "🔔 NURSE PREPARATION";
          msg = "Please proceed to the Nurse Station for vitals and preparation.";
-      } else if (lastEvent.event === 'PATIENT_READY') {
+      } else if ((lastEvent?.data?.event || lastEvent?.event) === 'PATIENT_READY') {
          title = "⏳ READY";
          msg = "Your preparation is complete. The doctor will see you shortly.";
-      } else if (lastEvent.event === 'PATIENT_SENT_TO_DOCTOR') {
+      } else if ((lastEvent?.data?.event || lastEvent?.event) === 'PATIENT_SENT_TO_DOCTOR') {
          title = "🩺 DOCTOR IS READY";
          msg = "Please proceed to the doctor's consultation room.";
       }
+      playNotificationSound();
       setToast({ title, message: msg, bgColor: "bg-blue-600" });
+      setLocalNotifications(prev => [{message: `${title} - ${msg}`, time: new Date().toLocaleTimeString([], {hour: "2-digit", minute:"2-digit"}), unread: true}, ...prev]);
       setTimeout(() => setToast(null), 10000);
     }
   }, [lastEvent, patientId]);
@@ -134,9 +158,18 @@ export default function PatientLayout() {
         )}
         <main className="flex-1 overflow-y-auto">
 
-          <Outlet context={{ data, loading }} />
+          <Outlet context={{ data, loading, setBookingOpen, fetchData, localNotifications }} />
         </main>
-        <BookingWizard isOpen={bookingOpen} onClose={() => setBookingOpen(false)} patientId={data?.patient?.id || patientId} />
+        <BookingWizard 
+          isOpen={bookingOpen} 
+          onClose={() => setBookingOpen(false)} 
+          patientId={data?.patient?.id || patientId} 
+          onComplete={() => {
+            fetchData();
+            // We can optionally keep it open to show the confirmation step,
+            // or let the wizard handle its own close via the button.
+          }}
+        />
       </div>
     </div>
   );
