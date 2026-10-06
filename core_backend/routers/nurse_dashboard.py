@@ -86,10 +86,22 @@ def get_nurse_dashboard():
 
 @router.get('/notifications')
 def get_nurse_notifications():
-    return {'data': []}
+    with orchestrator.Session() as session:
+        notifs = session.execute(text("SELECT id, patient_id, type, title, message, severity, read as is_read, created_at as timestamp FROM notifications ORDER BY created_at DESC LIMIT 50")).mappings().all()
+        return [dict(n) for n in notifs]
 
 @router.put('/notifications/{id}/read')
 def mark_notification_read(id: str):
+    with orchestrator.Session() as session:
+        session.execute(text("UPDATE notifications SET read = 1 WHERE id = :id"), {"id": id})
+        session.commit()
+    return {'status': 'success'}
+
+@router.post('/notifications/{id}/read')
+def mark_notification_read_post(id: str):
+    with orchestrator.Session() as session:
+        session.execute(text("UPDATE notifications SET read = 1 WHERE id = :id"), {"id": id})
+        session.commit()
     return {'status': 'success'}
 
 @router.get('/reports')

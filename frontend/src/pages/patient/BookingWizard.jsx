@@ -266,6 +266,11 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
               <div className="space-y-4">
                 <h3 className="font-bold text-xl text-[#0A2540] border-b pb-2">Select Doctor</h3>
                 <div>
+                  {predictionMessage && (
+                    <div className="mb-4 p-3 bg-blue-50 text-blue-800 text-sm rounded-lg border border-blue-200 shadow-sm flex items-center gap-2 transition-all">
+                      <span className="font-semibold">{predictionMessage}</span>
+                    </div>
+                  )}
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Department</label>
                   <select className="w-full p-2 border rounded" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})}>
                     <option value="">All Departments</option>
@@ -274,6 +279,16 @@ export default function BookingWizard({ isOpen, onClose, patientId, onComplete }
                     <option>Orthopedics</option>
                     <option>Pediatrics</option>
                     <option>Gynecology</option>
+                    <option>Dermatologist</option>
+                    <option>Ophthalmologist</option>
+                    <option>Dentist</option>
+                    <option>Psychiatrist</option>
+                    <option>Oncologist</option>
+                    <option>Neurologist</option>
+                    <option>Nephrologist</option>
+                    <option>Pulmonologist</option>
+                    <option>Geriatrician</option>
+                    <option>Gastroenterologist</option>
                   </select>
                 </div>
                 <div className="space-y-3 mt-4">

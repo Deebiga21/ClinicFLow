@@ -15,6 +15,33 @@ def get_patient_dashboard(patient_id: str):
         if not patient:
             return {"error": "Patient not found"}
             
+        try:
+            import uuid, datetime, asyncio
+            notif_id = f"NOTIF_{uuid.uuid4().hex[:8]}"
+            session.execute(text("""
+                INSERT INTO notifications (id, patient_id, type, title, message, severity, read, created_at)
+                VALUES (:id, :pid, 'System Alert', 'Patient App Synced', :msg, 'info', 0, :now)
+            """), {
+                "id": notif_id,
+                "pid": patient_id,
+                "msg": f"Patient {patient['name']} has arrived / synced their dashboard.",
+                "now": datetime.datetime.utcnow()
+            })
+            session.commit()
+            
+            from main import sio, manager
+            loop = asyncio.get_event_loop()
+            event_payload = {'type': 'ADMIN_NOTIFICATION', 'data': {'id': notif_id}}
+            if loop.is_running():
+                loop.create_task(sio.emit('ADMIN_NOTIFICATION', event_payload))
+                loop.create_task(manager.broadcast(event_payload))
+            else:
+                loop.run_until_complete(sio.emit('ADMIN_NOTIFICATION', event_payload))
+                loop.run_until_complete(manager.broadcast(event_payload))
+        except Exception as e:
+            print("Failed to sync notification:", e)
+
+            
         visit_status = patient_service.get_visit_status(patient_id)
         journey = patient_service.get_patient_journey(patient_id)
         medications = patient_service.get_patient_medications(patient_id)

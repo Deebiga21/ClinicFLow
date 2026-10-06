@@ -110,6 +110,19 @@ export default function Appointments() {
     }
   };
 
+  const handleProceedToBill = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/appointments/${id}/notify-billing`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) alert("Notified patient to proceed to billing!");
+      else alert("Failed to notify patient");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'confirmed': return 'text-green-600 bg-green-100';
@@ -196,6 +209,7 @@ export default function Appointments() {
                           )}
                           
                           <button onClick={() => handleDelete(apt.id)} className="text-xs font-semibold px-2 py-1 bg-red-50 text-red-700 rounded border border-red-200 hover:bg-red-100 transition">Delete</button>
+                          <button onClick={() => handleProceedToBill(apt.id)} className="text-xs font-semibold px-2 py-1 bg-purple-50 text-purple-700 rounded border border-purple-200 hover:bg-purple-100 transition whitespace-nowrap">Proceed to Bill</button>
                         </div>
                       </div>
                     </div>
