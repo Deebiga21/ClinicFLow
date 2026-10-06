@@ -31,7 +31,8 @@ async def broadcast_chat_message(msg):
         from main import sio, manager
         await sio.emit('chat_message_created', msg)
         await manager.broadcast({'type': 'chat_message_created', 'data': msg})
-    except ImportError:
+    except Exception as e:
+        print("Failed to broadcast chat message:", e)
         pass
 
 @router.get("/channels/{channel}/messages")

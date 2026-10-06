@@ -157,8 +157,8 @@ def call_next(req: CallNextRequest):
         import asyncio
         from main import manager, sio
         try:
-            
-            await sio.emit('systemBroadcast', {"event": "patient_called", "patient_id": called_patient_id}))
+            loop = asyncio.get_event_loop()
+            loop.create_task(sio.emit('systemBroadcast', {"event": "patient_called", "patient_id": called_patient_id}))
             loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "patient_called", "patient_id": called_patient_id}}))
         except Exception as e:
             pass
@@ -219,9 +219,9 @@ async def create_appointment(req: AppointmentCreate):
             session.execute(text("INSERT INTO doctors (id, name, active, created_at) VALUES (:id, :name, 1, CURRENT_TIMESTAMP)"), {"id": d_id, "name": req.doctor_name or "Doctor"})
             
         session.execute(text("""
-            INSERT INTO appointments (id, patient_id, doctor_id, appointment_date, appointment_time, appointment_type, status, created_at)
-            VALUES (:id, :pid, :did, :date, :time, :type, 'Scheduled', CURRENT_TIMESTAMP)
-        """), {"id": a_id, "pid": p_id, "did": d_id, "date": req.date, "time": req.time, "type": req.appointment_type})
+            INSERT INTO appointments (id, patient_id, doctor_id, appointment_date, appointment_time, appointment_type, reason, symptoms, status, created_at)
+            VALUES (:id, :pid, :did, :date, :time, :type, :reason, :symptoms, 'Scheduled', CURRENT_TIMESTAMP)
+        """), {"id": a_id, "pid": p_id, "did": d_id, "date": req.date, "time": req.time, "type": req.appointment_type, "reason": req.reason, "symptoms": req.symptoms})
         
         # Add to patient journey
         journey_id = str(uuid.uuid4())
@@ -236,7 +236,6 @@ async def create_appointment(req: AppointmentCreate):
     import asyncio
     from main import manager, sio
     try:
-        
         ws_data = {
             "event": "appointment_created", 
             "patient_id": p_id,
@@ -247,10 +246,51 @@ async def create_appointment(req: AppointmentCreate):
             "type": req.appointment_type,
             "doctor_id": d_id
         }
-        await sio.emit('systemBroadcast', ws_data))
+        await sio.emit('systemBroadcast', ws_data)
         await manager.broadcast({'type': 'update', 'data': ws_data})
     except Exception as e:
         pass
+
+    
+    # Auto-send chat message to nurse
+    try:
+        from services.chat_service import ChatService
+        chat_svc = ChatService()
+        msg_text = f"Patient booked an appointment. Reason: {req.reason}. Symptoms: {req.symptoms}."
+        msg = chat_svc.save_message(
+            sender_id=p_id,
+            sender_role="patient",
+            channel=f"patient_{p_id}",
+            message=msg_text,
+            message_type="text"
+        )
+        await sio.emit('chat_message_created', msg)
+        await manager.broadcast({'type': 'chat_message_created', 'data': msg})
+    except Exception as e:
+        print("Failed to auto-send chat:", e)
+
+    # Add to notifications for nurse
+    try:
+        with orchestrator.Session() as session:
+            import datetime
+            notif_id = f"NOTIF_{uuid.uuid4().hex[:8]}"
+            session.execute(text("""
+                INSERT INTO notifications (id, patient_id, type, title, message, severity, read, created_at)
+                VALUES (:id, :pid, 'Appointment', 'New Appointment Booked', :msg, 'info', 0, :now)
+            """), {
+                "id": notif_id,
+                "pid": p_id,
+                "msg": f"Patient booked a new appointment for {req.date} at {req.time}. Reason: {req.reason}",
+                "now": datetime.datetime.utcnow()
+            })
+            session.commit()
+            
+            event_payload = {'type': 'ADMIN_NOTIFICATION', 'data': {'id': notif_id}}
+            await sio.emit('ADMIN_NOTIFICATION', event_payload)
+            await manager.broadcast(event_payload)
+    except Exception as e:
+        print("Failed to create notification:", e)
+
 
     return {"id": a_id, "status": "Scheduled"}
 
@@ -359,8 +399,8 @@ def save_visit(req: VisitCreate):
             import asyncio
             from main import manager, sio
             try:
-                
-                await sio.emit('systemBroadcast', {"event": "consultation_completed", "patient_id": patient_id}))
+                loop = asyncio.get_event_loop()
+                loop.create_task(sio.emit('systemBroadcast', {"event": "consultation_completed", "patient_id": patient_id}))
                 loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "consultation_completed", "patient_id": patient_id}}))
             except Exception as e:
                 pass
@@ -429,8 +469,8 @@ def create_bill(req: BillCreate):
         import asyncio
         from main import manager, sio
         try:
-            
-            await sio.emit('systemBroadcast', {"event": "bill_generated", "patient_id": req.patient_id}))
+            loop = asyncio.get_event_loop()
+            loop.create_task(sio.emit('systemBroadcast', {"event": "bill_generated", "patient_id": req.patient_id}))
             loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "bill_generated", "patient_id": req.patient_id}}))
         except Exception:
             pass
@@ -472,8 +512,8 @@ def create_payment(req: dict):
         import asyncio
         from main import manager, sio
         try:
-            
-            await sio.emit('systemBroadcast', {"event": "payment_successful", "patient_id": patient_id}))
+            loop = asyncio.get_event_loop()
+            loop.create_task(sio.emit('systemBroadcast', {"event": "payment_successful", "patient_id": patient_id}))
             loop.create_task(manager.broadcast({'type': 'update', 'data': {"event": "payment_successful", "patient_id": patient_id}}))
         except Exception:
             pass

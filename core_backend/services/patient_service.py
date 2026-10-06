@@ -78,14 +78,14 @@ class PatientService:
                 results = [
                     {
                         "id": "DEMO_1", "patient_id": patient_id, "medicine_name": "Amoxicillin 500mg", 
-                        "dosage": "500mg", "frequency": "Twice daily", "schedules": [
+                        "dosage": "500mg", "frequency": "Twice daily", "duration_days": 5, "instructions": "Take after meals", "schedules": [
                             {"id": "SCH_1", "scheduled_time": "09:00 AM", "status": "Pending"},
                             {"id": "SCH_2", "scheduled_time": "09:00 PM", "status": "Pending"}
                         ]
                     },
                     {
                         "id": "DEMO_2", "patient_id": patient_id, "medicine_name": "Paracetamol 650mg", 
-                        "dosage": "650mg", "frequency": "Three times daily", "schedules": [
+                        "dosage": "650mg", "frequency": "Three times daily", "duration_days": 3, "instructions": "Take if fever > 100°F", "schedules": [
                             {"id": "SCH_3", "scheduled_time": "08:00 AM", "status": "Taken"},
                             {"id": "SCH_4", "scheduled_time": "02:00 PM", "status": "Pending"},
                             {"id": "SCH_5", "scheduled_time": "08:00 PM", "status": "Pending"}
@@ -93,7 +93,7 @@ class PatientService:
                     },
                     {
                         "id": "DEMO_3", "patient_id": patient_id, "medicine_name": "Vitamin C Complex", 
-                        "dosage": "1 tablet", "frequency": "Once daily", "schedules": [
+                        "dosage": "1 tablet", "frequency": "Once daily", "duration_days": 30, "instructions": "Take in the morning", "schedules": [
                             {"id": "SCH_6", "scheduled_time": "08:00 AM", "status": "Pending"}
                         ]
                     }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
   User, Clock, CheckCircle2, QrCode, 
-  MapPin, Calendar, Pill, Navigation, Activity, X
+  MapPin, Calendar, Pill, Navigation, Activity, X, MessageCircle
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { API_BASE } from '../../config';
@@ -190,7 +190,8 @@ export default function PatientHome() {
               )}
             </div>
             {today_appointment.id ? (
-              <div className="p-5 flex gap-4">
+              <div className="flex flex-col">
+                <div className="p-5 flex gap-4">
                 <div className="flex-1 space-y-4">
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <span className="text-gray-500">Doctor</span>
@@ -202,7 +203,7 @@ export default function PatientHome() {
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <span className="text-gray-500">Reason</span>
-                    <span className="col-span-2 font-medium text-[#0A2540]">{today_appointment.appointment_type || '--'}</span>
+                    <span className="col-span-2 font-medium text-[#0A2540]">{today_appointment.reason || today_appointment.appointment_type || '--'}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <span className="text-gray-500">Appointment</span>
@@ -244,6 +245,12 @@ export default function PatientHome() {
                   )}
                 </div>
               </div>
+              <div className="px-5 pb-5">
+                <button onClick={() => window.location.href='#/patient/chat'} className="w-full flex justify-center items-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-100 hover:bg-blue-100 transition">
+                  <MessageCircle size={18} /> Send Message to Nurse
+                </button>
+              </div>
+            </div>
             ) : (
               <div className="p-8 flex flex-col items-center justify-center text-center text-gray-500">
                 <Calendar size={48} className="text-gray-300 mb-4" />

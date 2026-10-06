@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, AlertTriangle, AlertCircle, Info, CheckCircle2, Clock, Check, Activity, Pill, Cpu, ShieldAlert } from 'lucide-react';
+import { Bell, AlertTriangle, AlertCircle, Info, CheckCircle2, Clock, Check, Activity, Pill, Cpu, ShieldAlert, MessageCircle, X } from 'lucide-react';
+import ChatPanel from '../../components/ChatPanel';
 import { api } from '../../services/api';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
 import LoadingState from '../../components/shared/LoadingState';
@@ -9,6 +10,7 @@ export default function NurseNotifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [chatPatientId, setChatPatientId] = useState(null);
   const { lastEvent } = useClinicWebSocket();
 
   const fetchNotifications = async () => {
@@ -140,6 +142,25 @@ export default function NurseNotifications() {
           </div>
         )}
       </div>
+
+      {chatPatientId && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col h-[600px]">
+            <div className="px-4 py-3 bg-blue-600 text-white flex justify-between items-center">
+              <h3 className="font-bold flex items-center gap-2">
+                <MessageCircle size={18} /> Chat with Patient
+              </h3>
+              <button onClick={() => setChatPatientId(null)} className="hover:bg-blue-700 p-1 rounded">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 bg-gray-50 p-0 relative">
+              <ChatPanel channelId={patient_} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

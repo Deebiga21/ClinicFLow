@@ -70,6 +70,8 @@ class Appointment(Base):
     appointment_date = Column(String)
     appointment_time = Column(String)
     appointment_type = Column(String)
+    reason = Column(String, nullable=True)
+    symptoms = Column(String, nullable=True)
     payment_status = Column(String, default='Pending')
     token_status = Column(String, default='Pending')
     status = Column(String)

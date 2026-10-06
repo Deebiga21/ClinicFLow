@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useClinicWebSocket } from '../../hooks/useClinicWebSocket';
-import { Users, Clock, ArrowRight, CheckCircle } from 'lucide-react';
+import { Users, ArrowRight, Activity, Clock, ShieldAlert, MessageCircle, X } from 'lucide-react';
+import ChatPanel from '../../components/ChatPanel';
 const API_BASE = 'http://localhost:8000/api';
 
 export default function NursePatientFlow() {
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [chatPatient, setChatPatient] = useState(null);
   const { lastEvent } = useClinicWebSocket();
 
   const fetchQueue = async () => {
@@ -61,15 +63,29 @@ export default function NursePatientFlow() {
                 <td className="p-4 font-bold text-[#0A2540]">{q.token}</td>
                 <td className="p-4 text-slate-700">{q.patient_name}</td>
                 <td className="p-4 text-slate-600">{q.doctor_name}</td>
-                <td className="p-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                    q.status === 'Waiting' ? 'bg-amber-100 text-amber-700' :
-                    q.status === 'Ready' ? 'bg-blue-100 text-blue-700' :
-                    q.status === 'In Consultation' ? 'bg-purple-100 text-purple-700' :
-                    'bg-slate-100 text-slate-700'
-                  }`}>
-                    {q.status}
-                  </span>
+                                <td className="p-4 flex items-center gap-2">
+                  {q.status === 'Waiting' || q.status === 'Scheduled' || q.status === 'Ready' ? (
+                    <button 
+                      onClick={() => handleCallNext(q.id, q.doctor_id)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-4 rounded shadow-sm flex items-center gap-2 text-sm transition-colors"
+                    >
+                      Call Next <ArrowRight size={14} />
+                    </button>
+                  ) : q.status === 'In Consultation' ? (
+                    <span className="text-purple-600 text-sm font-semibold flex items-center gap-1">
+                      Consulting...
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 text-sm font-medium">Completed</span>
+                  )}
+                  
+                  <button 
+                    onClick={() => setChatPatient(q)}
+                    className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded"
+                    title="Chat with Patient"
+                  >
+                    <MessageCircle size={18} />
+                  </button>
                 </td>
                 <td className="p-4 text-slate-600 font-medium">
                   {q.predicted_wait} min
@@ -100,6 +116,25 @@ export default function NursePatientFlow() {
           </tbody>
         </table>
       </div>
+
+      {chatPatient && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col h-[600px]">
+            <div className="px-4 py-3 bg-blue-600 text-white flex justify-between items-center">
+              <h3 className="font-bold flex items-center gap-2">
+                <MessageCircle size={18} /> Chat: Token {chatPatient.token_number}
+              </h3>
+              <button onClick={() => setChatPatient(null)} className="hover:bg-blue-700 p-1 rounded">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 bg-gray-50 p-0 relative">
+              <ChatPanel channelId={patient_} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
