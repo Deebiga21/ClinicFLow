@@ -1,10 +1,11 @@
-
+﻿
 import React, { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { FileText, Download, QrCode } from "lucide-react";
 import EmptyState from "../../components/shared/EmptyState";
 import { useClinicWebSocket } from "../../hooks/useClinicWebSocket";
 import { QRCodeSVG } from "qrcode.react";
+import { API_BASE } from "../../config";
 
 export default function PatientPrescriptions() {
   const { data, loading } = useOutletContext();
@@ -23,7 +24,11 @@ export default function PatientPrescriptions() {
     }
   }, [lastEvent]);
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    try {
+      const pId = data?.patient?.id || "UNKNOWN";
+      await fetch(API_BASE + "/patient/" + pId + "/pay-bill", { method: "POST" });
+    } catch(e) {}
     alert("Payment successful! Nurse has been notified.");
     setShowBilling(false);
   };
@@ -70,6 +75,9 @@ export default function PatientPrescriptions() {
               <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                 <Download size={16} />
                 Download PDF
+              </button>
+              <button onClick={() => setShowBilling(true)} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-lg text-sm font-bold transition-colors ml-2">
+                Proceed to Bill
               </button>
             </div>
             <div className="p-6">

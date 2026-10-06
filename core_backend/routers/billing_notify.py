@@ -19,6 +19,10 @@ async def notify_billing(id: str):
 
 @router.post("/api/patient/{patient_id}/pay-bill")
 async def pay_bill(patient_id: str):
+    with Session() as session:
+        session.execute(text("UPDATE bills SET status = 'Paid' WHERE patient_id = :pid"), {"pid": patient_id})
+        session.execute(text("UPDATE appointments SET token_status = 'Paid' WHERE patient_id = :pid AND status = 'Completed'"), {"pid": patient_id})
+        session.commit()
     from main import manager, sio
     await manager.broadcast({"type": "payment_successful", "patient_id": patient_id})
     return {"ok": True}
