@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { 
   Home, Clock, Map, Calendar, Pill, FileText, Bell, User, MessageCircle
@@ -37,7 +37,7 @@ export default function PatientLayout() {
   const location = useLocation();
   const [bookingOpen, setBookingOpen] = React.useState(false);
   const { user } = useAuth();
-  const [patientId, setPatientId] = useState(user?.patient_id || 'P_1');
+  const [patientId, setPatientId] = useState(user?.patient_id || 'P_demo_1');
 
   // Sync patientId if user changes
   useEffect(() => {
@@ -57,16 +57,16 @@ export default function PatientLayout() {
       ['patient_called', 'NURSE_PREPARATION_STARTED', 'PATIENT_READY', 'PATIENT_SENT_TO_DOCTOR'].includes((lastEvent?.data?.event || lastEvent?.event)) && 
       (lastEvent?.data?.patient_id || lastEvent?.patient_id) === patientId
     ) {
-      let msg = "Your turn — The doctor is ready for your consultation.";
-      let title = "🔔 YOUR TURN";
+      let msg = "Your turn â€” The doctor is ready for your consultation.";
+      let title = "ðŸ”” YOUR TURN";
       if ((lastEvent?.data?.event || lastEvent?.event) === 'NURSE_PREPARATION_STARTED') {
-         title = "🔔 NURSE PREPARATION";
+         title = "ðŸ”” NURSE PREPARATION";
          msg = "Please proceed to the Nurse Station for vitals and preparation.";
       } else if ((lastEvent?.data?.event || lastEvent?.event) === 'PATIENT_READY') {
-         title = "⏳ READY";
+         title = "â³ READY";
          msg = "Your preparation is complete. The doctor will see you shortly.";
       } else if ((lastEvent?.data?.event || lastEvent?.event) === 'PATIENT_SENT_TO_DOCTOR') {
-         title = "🩺 DOCTOR IS READY";
+         title = "ðŸ©º DOCTOR IS READY";
          msg = "Please proceed to the doctor's consultation room.";
       }
       playNotificationSound();

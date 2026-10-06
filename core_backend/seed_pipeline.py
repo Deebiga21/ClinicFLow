@@ -1,4 +1,4 @@
-"""
+﻿"""
 ClinicFlow - Complete Pipeline Dataset Seeder (v4 - final)
 """
 import sqlite3
@@ -7,7 +7,7 @@ import random
 from datetime import datetime, timedelta, date
 import sys
 
-DB_PATH = r'd:\ClinicFLow\core_backend\clinic_core_v2.db'
+DB_PATH = r'd:\clinic-queue -updated\core_backend\clinic_core_v2.db'
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
@@ -117,7 +117,7 @@ print(f"  OK: {len(pipeline_config)} appointments/queues/journeys created")
 
 # 4. ML PREDICTIONS
 print("\n[4] Running ML waiting-time predictions...")
-sys.path.insert(0, r'd:\ClinicFLow\core_backend')
+sys.path.insert(0, r'd:\clinic-queue -updated\core_backend')
 try:
     import joblib, pandas as pd
     model = joblib.load(r'd:\ClinicFLow\core_backend\saved_models\waiting_time_model.pkl')
