@@ -18,6 +18,7 @@ from routers.operational import router as operational_router
 from routers.auth import router as auth_router
 from routers.chat import router as chat_router
 from routers.billing_notify import router as billing_router
+from routers.analytics import router as analytics_router
 
 app = FastAPI(title="ClinicFlow Intelligence Core")
 
@@ -41,6 +42,7 @@ app.include_router(operational_router)
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(billing_router)
+app.include_router(analytics_router)
 
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 socket_app = socketio.ASGIApp(sio, other_asgi_app=app)

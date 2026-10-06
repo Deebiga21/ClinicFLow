@@ -15,11 +15,11 @@ export default function Feedback() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/feedback/prediction`);
-      setFeedbackList(res.data.data.list || []);
-      setSummary(res.data.data.summary || {});
+      const res = await axios.get(`${API_BASE_URL}/api/feedback/prediction`);
+      setFeedbackList(res.data.data?.list || []);
+      setSummary(res.data.data?.summary || {});
+    } catch (error) {
       console.error('Failed to load feedback', error);
-      // Remove dummy fallback as per instructions
     } finally {
       setLoading(false);
     }

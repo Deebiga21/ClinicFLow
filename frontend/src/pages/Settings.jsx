@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { isSoundEnabled, setSoundEnabled, playChime } from '../utils/sound';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { API_BASE_URL } from '../config';
 import {
   Sun, Moon, LogOut, User as UserIcon, Mail, Phone, Briefcase,
   Volume2, VolumeX, MessageSquareText, Save, KeyRound, CheckCircle2,
   Bell, BellOff, Sparkles, Monitor, Eye, Clock, Palette,
-  Zap, Shield, Download, RefreshCw, AlertCircle, Loader2
+  Zap, Shield, Download, RefreshCw, AlertCircle, Loader2, Settings as SettingsIcon
 } from 'lucide-react';
 
 const PREFS_KEY = 'cqm.prefs';
@@ -59,6 +60,38 @@ export default function Settings() {
   const [pwErr, setPwErr] = useState('');
   const [savingPw, setSavingPw] = useState(false);
   const [savedPw, setSavedPw] = useState(false);
+
+  const [ops, setOps] = useState({ defaultConsultationTime: 15, congestionThreshold: 10 });
+  const [savingOps, setSavingOps] = useState(false);
+  const [savedOps, setSavedOps] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetch(`${API_BASE_URL}/api/admin/settings`)
+        .then(res => res.json())
+        .then(d => {
+           if (d?.data) {
+             setOps(d.data);
+           }
+        }).catch(e => console.error(e));
+    }
+  }, [user]);
+
+  async function handleOpsSave(e) {
+    e.preventDefault();
+    setSavingOps(true); setSavedOps(false);
+    try {
+      await fetch(`${API_BASE_URL}/api/admin/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ops)
+      });
+      setSavedOps(true); setTimeout(() => setSavedOps(false), 2500);
+    } catch(e) {}
+    finally { setSavingOps(false); }
+  }
+
+
 
   const [prefs, setPrefs] = useState(() => ({
     notifyOnCall: true, notifyOnChat: true, aiAssistant: true,
@@ -238,6 +271,25 @@ export default function Settings() {
             <LogOut size={14} />Sign out
           </button>
         </motion.div>
+
+        
+        {/* Clinic Operations (Admin Only) */}
+        {user?.role === 'admin' && (
+          <motion.div className="card" {...card} transition={{ delay: .13 }}>
+            <SectionTitle icon={SettingsIcon} title="Clinic Operations (Global)" />
+            <form onSubmit={handleOpsSave}>
+              <div className="settings__field">
+                <label className="auth__label">Default Consultation Time (mins)</label>
+                <input className="input" type="number" min="1" value={ops.defaultConsultationTime || 15} onChange={e => setOps({ ...ops, defaultConsultationTime: parseInt(e.target.value) })} />
+              </div>
+              <div className="settings__field">
+                <label className="auth__label">Congestion Threshold (waiting patients)</label>
+                <input className="input" type="number" min="1" value={ops.congestionThreshold || 10} onChange={e => setOps({ ...ops, congestionThreshold: parseInt(e.target.value) })} />
+              </div>
+              <SaveBtn saving={savingOps} saved={savedOps} label="Save Global Settings" />
+            </form>
+          </motion.div>
+        )}
 
         {/* Data & Privacy */}
         <motion.div className="card" {...card} transition={{ delay: .14 }}>

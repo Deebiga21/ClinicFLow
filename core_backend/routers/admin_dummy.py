@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+﻿from fastapi import APIRouter
 
 router = APIRouter(prefix="/api/admin", tags=["admin_dummy"])
 
@@ -70,13 +70,23 @@ def get_reports():
 def generate_report():
     return {'status': 'success'}
 
+clinic_settings = {
+    'defaultConsultationTime': 15,
+    'congestionThreshold': 10
+}
+
 @router.get('/settings')
 def get_settings():
-    return {'data': {'notifications_enabled': True}}
+    return {'data': clinic_settings}
 
 @router.put('/settings')
 def update_settings(req: dict):
-    return {'status': 'success'}
+    global clinic_settings
+    if 'defaultConsultationTime' in req:
+        clinic_settings['defaultConsultationTime'] = req['defaultConsultationTime']
+    if 'congestionThreshold' in req:
+        clinic_settings['congestionThreshold'] = req['congestionThreshold']
+    return {'status': 'success', 'data': clinic_settings}
 
 @router.get('/system/status')
 def get_system_status():
@@ -89,3 +99,13 @@ def get_admin_notifications():
 @router.post('/notifications/{id}/read')
 def mark_admin_notification_read(id: str):
     return {'status': 'success'}
+import subprocess
+import os
+
+@router.post('/seed-demo-data')
+def seed_demo_data():
+    try:
+        subprocess.run(['python', 'seed_pipeline.py'], check=True)
+        return {'status': 'success', 'message': 'Demo data seeded successfully.'}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}

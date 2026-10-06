@@ -14,10 +14,10 @@ export default function Reports() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/reports/daily`);
+      const res = await axios.get(`${API_BASE_URL}/api/reports/daily`);
       setReport(res.data.data || {});
+    } catch (error) {
       console.error('Failed to load reports', error);
-      // Remove dummy fallback as per instructions
     } finally {
       setLoading(false);
     }

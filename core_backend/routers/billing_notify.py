@@ -2,7 +2,6 @@
 from fastapi import APIRouter
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from services.orchestration import manager
 import asyncio
 
 router = APIRouter(tags=["billing"])
@@ -12,9 +11,15 @@ Session = sessionmaker(bind=engine)
 @router.post("/api/appointments/{id}/notify-billing")
 async def notify_billing(id: str):
     with Session() as session:
-        # Get patient_id from appointment
         row = session.execute(text("SELECT patient_id FROM appointments WHERE id = :id"), {"id": id}).first()
         if row and row.patient_id:
+            from main import manager, sio
             await manager.broadcast({"type": "billing_notified", "patient_id": row.patient_id})
+    return {"ok": True}
+
+@router.post("/api/patient/{patient_id}/pay-bill")
+async def pay_bill(patient_id: str):
+    from main import manager, sio
+    await manager.broadcast({"type": "payment_successful", "patient_id": patient_id})
     return {"ok": True}
 

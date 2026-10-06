@@ -83,15 +83,21 @@ export default function Assistant() {
     const ctx = liveCtx();
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/clinical-ai/ask`, {
+      const payload = {
+        sender_id: user?.id || 'unknown',
+        sender_role: user?.role || 'patient',
+        message: msg
+      };
+
+      const res = await fetch(`${API_BASE_URL}/api/chat/bot/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: msg, context: ctx })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'API error');
       
-      const reply = data.answer || 'Sorry, I had trouble responding.';
+      const reply = data.data?.bot_response?.message || data.answer || 'Sorry, I had trouble responding.';
       histRef.current = [...histRef.current, { role: 'assistant', content: reply }];
       setMsgs(prev => [...prev, { id: _id++, from: 'bot', text: reply }]);
       setOnline(true);
