@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import random
 import datetime
@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database.models import *
 
-db_path = 'sqlite:///../clinic_core_v2.db'
+db_path = 'sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db'
 engine = create_engine(db_path)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)

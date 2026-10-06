@@ -1,4 +1,4 @@
-from sqlalchemy import text
+﻿from sqlalchemy import text
 import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -34,7 +34,7 @@ class OrchestrationService:
             # The schema looks like it just tracks current_stage. 
             # We will update it.
             journey.stage_started_at = now
-    def __init__(self, db_url="sqlite:///clinic_core_v2.db"):
+    def __init__(self, db_url="sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db"):
         self.engine = create_engine(db_url)
         self.Session = sessionmaker(bind=self.engine)
         

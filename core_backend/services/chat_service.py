@@ -1,4 +1,4 @@
-import datetime
+﻿import datetime
 import uuid
 import re
 from sqlalchemy.orm import sessionmaker
@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, text
 from database.models import ChatMessage, Notification, QueueEntry, PatientJourney, MedicineBatch, ModelVersion, Doctor, Patient, Prediction
 
 class ChatService:
-    def __init__(self, db_path='sqlite:///clinic_core_v2.db'):
+    def __init__(self, db_path='sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db'):
         self.engine = create_engine(db_path)
         self.Session = sessionmaker(bind=self.engine)
 
@@ -91,7 +91,7 @@ class ChatService:
                 
                 res = "Medicines at expiry risk:\n"
                 for b in near_expiry:
-                    res += f"• Batch {b.batch_number} (Qty: {b.quantity}), Expiring on {b.expiry_date.strftime('%Y-%m-%d')}\n"
+                    res += f"â€¢ Batch {b.batch_number} (Qty: {b.quantity}), Expiring on {b.expiry_date.strftime('%Y-%m-%d')}\n"
                 return res.strip()
                 
             # 4. Doctor workload / Highest workload
@@ -112,7 +112,7 @@ class ChatService:
                 models = session.query(ModelVersion).filter(ModelVersion.status == 'Active').all()
                 res = "Active ML Models:\n"
                 for m in models:
-                    res += f"• {m.model_name} (v{m.version})\n"
+                    res += f"â€¢ {m.model_name} (v{m.version})\n"
                 return res.strip()
                 
             # 6. Patient flow / Today's flow

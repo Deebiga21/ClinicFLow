@@ -1,11 +1,11 @@
-
+﻿
 from fastapi import APIRouter
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 import asyncio
 
 router = APIRouter(tags=["billing"])
-engine = create_engine("sqlite:///clinic_core_v2.db")
+engine = create_engine("sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db")
 Session = sessionmaker(bind=engine)
 
 @router.post("/api/appointments/{id}/notify-billing")

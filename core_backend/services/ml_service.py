@@ -1,4 +1,4 @@
-import os
+﻿import os
 import joblib
 import pandas as pd
 import datetime
@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 class MLService:
-    def __init__(self, db_url="sqlite:///clinic_core_v2.db"):
+    def __init__(self, db_url="sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db"):
         self.engine = create_engine(db_url)
         self.Session = sessionmaker(bind=self.engine)
         self.base_path = os.path.join(os.path.dirname(__file__), '..', 'saved_models')

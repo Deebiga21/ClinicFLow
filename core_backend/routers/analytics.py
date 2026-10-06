@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import datetime
 
 router = APIRouter(tags=["analytics"])
-engine = create_engine("sqlite:///clinic_core_v2.db")
+engine = create_engine("sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db")
 Session = sessionmaker(bind=engine)
 
 @router.get("/api/reports/daily")

@@ -1,14 +1,14 @@
-import pandas as pd
+﻿import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import datetime
 import os
 
 class FeatureEngineer:
-    def __init__(self, db_url="sqlite:///../clinic_core_v2.db"):
+    def __init__(self, db_url="sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db"):
         # The script is often run from core_backend/ml directory
         if not os.path.exists("../clinic_core_v2.db") and os.path.exists("clinic_core_v2.db"):
-            db_url = "sqlite:///clinic_core_v2.db"
+            db_url = "sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db"
         elif not os.path.exists("../clinic_core_v2.db") and os.path.exists("core_backend/clinic_core_v2.db"):
             db_url = "sqlite:///core_backend/clinic_core_v2.db"
             

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+﻿from fastapi import APIRouter
 from services.ml_service import MLService
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 router = APIRouter(tags=["operational"])
 ml_service = MLService()
 
-engine = create_engine("sqlite:///clinic_core_v2.db")
+engine = create_engine("sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db")
 Session = sessionmaker(bind=engine)
 
 @router.get("/api/congestion/current")

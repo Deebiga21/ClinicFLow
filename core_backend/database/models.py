@@ -1,4 +1,4 @@
-import os
+﻿import os
 import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -294,7 +294,7 @@ class ChatMessage(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 if __name__ == "__main__":
-    db_path = 'sqlite:///../clinic_core_v2.db' # Fixed path for execution
+    db_path = 'sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db' # Fixed path for execution
     engine = create_engine(db_path)
     Base.metadata.create_all(engine)
     print("Database clinic_core_v2.db created with all tables.")

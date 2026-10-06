@@ -1,11 +1,11 @@
-import os
+﻿import os
 from sqlalchemy import create_engine, text, func, and_
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 from database.models import QueueEntry, Appointment, Doctor, Prediction, PredictionOutcome, ModelVersion, Anomaly
 
 class AdminService:
-    def __init__(self, db_url="sqlite:///clinic_core_v2.db"):
+    def __init__(self, db_url="sqlite:///d:/clinic-queue -updated/core_backend/clinic_core_v2.db"):
         self.engine = create_engine(db_url)
         self.Session = sessionmaker(bind=self.engine)
 
