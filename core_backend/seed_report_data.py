@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timedelta
 import json
 
-db_path = 'd:/ClinicFLow/core_backend/clinic_core_v2.db'
+db_path = 'clinic_core_v2.db'
 conn = sqlite3.connect(db_path)
 c = conn.cursor()
 
@@ -16,18 +16,18 @@ c.execute("DELETE FROM model_versions")
 
 models = [
     {
-        "name": "Waiting Time Prediction", "version": "1.4.2", "rows": 14500, 
-        "target": "actual_wait_minutes", "metrics": {"MAE": 2.1, "RMSE": 3.4, "R2": 0.86}, 
+        "name": "Waiting Time Prediction", "version": "1.4.2", "rows": 8412, 
+        "target": "actual_wait_minutes", "metrics": {"MAE": 3.04, "R2": 0.897}, 
         "status": "Active"
     },
     {
-        "name": "Consultation Duration", "version": "2.1.0", "rows": 12800, 
-        "target": "consultation_duration", "metrics": {"MAE": 3.8, "RMSE": 5.1, "R2": 0.79}, 
+        "name": "Consultation Duration", "version": "2.1.0", "rows": 8412, 
+        "target": "consultation_duration", "metrics": {"MAE": 3.93, "R2": 0.146}, 
         "status": "Active"
     },
     {
-        "name": "Patient No-Show", "version": "3.0.1", "rows": 22000, 
-        "target": "no_show_boolean", "metrics": {"Precision": 0.82, "Recall": 0.76, "F1": 0.79, "ROC-AUC": 0.88}, 
+        "name": "Patient No-Show", "version": "3.0.1", "rows": 8412, 
+        "target": "no_show_boolean", "metrics": {"ROC-AUC": 0.68}, 
         "status": "Active"
     },
     {

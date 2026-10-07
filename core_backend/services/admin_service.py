@@ -1,4 +1,4 @@
-﻿import os
+import os
 from sqlalchemy import create_engine, text, func, and_
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
@@ -280,10 +280,35 @@ class AdminService:
             return results
 
     def get_ml_models(self):
+        from database.models import Prediction
         with self.Session() as session:
-            models = session.query(ModelVersion).all()
+            models = session.query(ModelVersion).filter(ModelVersion.status.in_(['Active', 'Training'])).all()
             res = []
             for m in models:
+                last_p = None
+                if "Waiting Time" in m.model_name:
+                    last_p = session.query(Prediction).filter(Prediction.prediction_type == "waiting_time").order_by(Prediction.created_at.desc()).first()
+                elif "Consultation" in m.model_name:
+                    last_p = session.query(Prediction).filter(Prediction.prediction_type == "consultation_duration").order_by(Prediction.created_at.desc()).first()
+                elif "No-Show" in m.model_name:
+                    last_p = session.query(Prediction).filter(Prediction.prediction_type == "no_show").order_by(Prediction.created_at.desc()).first()
+                
+                lastPrediction = None
+                if last_p:
+                    val_str = str(last_p.prediction_value)
+                    if "Time" in m.model_name or "Duration" in m.model_name:
+                        val_str += " min"
+                    lastPrediction = {
+                        "value": val_str,
+                        "timestamp": last_p.created_at.strftime("%I:%M %p") if last_p.created_at else ""
+                    }
+
+                algo = "Isolation Forest"
+                if "Time" in m.model_name or "Duration" in m.model_name or "Demand" in m.model_name:
+                    algo = "XGBoost Regressor"
+                elif "Show" in m.model_name:
+                    algo = "XGBoost Classifier"
+
                 res.append({
                     "id": m.id,
                     "name": m.model_name,
@@ -294,8 +319,9 @@ class AdminService:
                     "trainingRows": m.training_rows,
                     "target": m.target,
                     "modelFile": m.model_path,
-                    "algorithm": "XGBoost Regressor" if "Time" in m.model_name else ("Random Forest" if "Show" in m.model_name else "Isolation Forest"),
-                    "features": ["day_of_week", "hour", "doctor_workload", "queue_size"] if m.features else []
+                    "algorithm": algo,
+                    "features": ["day_of_week", "hour", "doctor_workload", "queue_size"] if m.features else [],
+                    "lastPrediction": lastPrediction
                 })
             return res
 

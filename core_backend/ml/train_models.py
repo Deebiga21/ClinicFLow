@@ -19,7 +19,11 @@ def register_model(fe, name, features, target, metrics, path):
         res = conn.execute(text("SELECT version FROM model_versions WHERE model_name = :name ORDER BY training_date DESC LIMIT 1"), {"name": name}).fetchone()
         v = "1.0"
         if res:
-            v = str(float(res[0]) + 0.1)
+            try:
+                v = str(float(res[0]) + 0.1)
+            except ValueError:
+                parts = res[0].split('.')
+                v = f"{parts[0]}.{int(parts[1]) + 1}"
             
         m_id = str(uuid.uuid4())
         

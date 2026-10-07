@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import datetime
@@ -26,8 +26,8 @@ class FeatureEngineer:
 
     def build_waiting_time_features(self):
         df = self.load_queue_data()
-        df['entered_queue_at'] = pd.to_datetime(df['entered_queue_at'])
-        df['called_at'] = pd.to_datetime(df['called_at'])
+        df['entered_queue_at'] = pd.to_datetime(df['entered_queue_at'], format='mixed', errors='coerce')
+        df['called_at'] = pd.to_datetime(df['called_at'], format='mixed', errors='coerce')
         
         # Target
         # Only for training when called_at is available
@@ -63,8 +63,8 @@ class FeatureEngineer:
             WHERE q.consultation_started_at IS NOT NULL AND q.consultation_completed_at IS NOT NULL
         """
         df = pd.read_sql(query, self.engine)
-        df['consultation_started_at'] = pd.to_datetime(df['consultation_started_at'])
-        df['consultation_completed_at'] = pd.to_datetime(df['consultation_completed_at'])
+        df['consultation_started_at'] = pd.to_datetime(df['consultation_started_at'], format='mixed', errors='coerce')
+        df['consultation_completed_at'] = pd.to_datetime(df['consultation_completed_at'], format='mixed', errors='coerce')
         
         features = pd.DataFrame()
         features['historical_duration'] = df['average_consultation_duration']
@@ -85,8 +85,8 @@ class FeatureEngineer:
             JOIN patients p ON a.patient_id = p.id
         """
         df = pd.read_sql(query, self.engine)
-        df['appointment_date'] = pd.to_datetime(df['appointment_date'])
-        df['created_at'] = pd.to_datetime(df['created_at'])
+        df['appointment_date'] = pd.to_datetime(df['appointment_date'], format='mixed', errors='coerce')
+        df['created_at'] = pd.to_datetime(df['created_at'], format='mixed', errors='coerce')
         
         # We don't have previous no-show counts easily in v2 without window functions, just use basic ones
         features = pd.DataFrame()
@@ -101,6 +101,6 @@ class FeatureEngineer:
             # handle cases where format varies
             features['hour'] = 10 
         
-        target = df['no_show'].astype(int)
+        target = df['no_show'].fillna(0).astype(int)
         
         return features, target, df

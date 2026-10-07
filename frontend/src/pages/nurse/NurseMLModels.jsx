@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+
 import { BrainCircuit, Cpu, Calendar, Database, Target, FileText, CheckCircle, AlertTriangle, XCircle, ChevronRight, Activity } from 'lucide-react';
 import StatusBadge from '../../components/shared/StatusBadge';
 import LoadingState from '../../components/shared/LoadingState';
@@ -30,6 +32,11 @@ export default function NurseMLModels() {
   useEffect(() => {
     fetchData();
   }, [lastEvent]);
+
+  
+  const chartData = selectedModel?.metrics && Object.keys(selectedModel.metrics).length > 0 
+    ? Object.entries(selectedModel.metrics).map(([k, v]) => ({ name: k, value: parseFloat(v) || 0 })) 
+    : [];
 
   if (loading) return <LoadingState message="Loading ML Models..." />;
 
@@ -69,7 +76,7 @@ export default function NurseMLModels() {
                     <div>
                       <p className="font-semibold text-gray-900">{model.name}</p>
                       <div className="mt-1">
-                        <StatusBadge status={getStatusColor(model.status)}>{model.status}</StatusBadge>
+                        <StatusBadge status={getStatusColor(model.status)} text={model.status} />
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -93,7 +100,7 @@ export default function NurseMLModels() {
                   <h2 className="text-2xl font-bold text-gray-900">{selectedModel.name}</h2>
                   <p className="text-gray-500">{selectedModel.problemType || "N/A"}</p>
                 </div>
-                <StatusBadge status={getStatusColor(selectedModel.status)}>{selectedModel.status}</StatusBadge>
+                <StatusBadge status={getStatusColor(selectedModel.status)} text={selectedModel.status} />
               </div>
 
               {selectedModel.status?.toUpperCase() === 'NOT TRAINED' && (
@@ -161,17 +168,30 @@ export default function NurseMLModels() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="text-md font-semibold text-gray-800 mb-2 border-b pb-2">Evaluation Metrics</h3>
-                  {selectedModel.metrics ? (
-                    <div className="space-y-2">
-                      {Object.entries(selectedModel.metrics).map(([key, value]) => (
-                        <div key={key} className="flex justify-between">
-                          <span className="text-sm text-gray-500 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                          <span className="font-semibold text-gray-900">{value}</span>
-                        </div>
-                      ))}
+                  {chartData.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        {Object.entries(selectedModel.metrics).map(([key, value]) => (
+                          <div key={key} className="flex justify-between">
+                            <span className="text-sm text-gray-500 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                            <span className="font-semibold text-gray-900">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="h-48 w-full mt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                            <XAxis type="number" />
+                            <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 12}} />
+                            <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                            <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-gray-500">N/A</p>
+                    <p className="text-gray-500 italic">No evaluation metrics available.</p>
                   )}
                 </div>
                 <div>
